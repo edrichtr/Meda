@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thanh Toán Đơn Hàng - Mê Đá Coffee</title>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #FBF6EE;
+            --card-bg: #FFFDF9;
+            --primary: #3D2B1F;
+            --accent: #C85A32;
+            --border: #E8DFC8;
+            --green: #2E7D32;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-color);
+            color: #2B1E16;
+            padding: 2rem 1rem;
+        }
+
+        .checkout-card {
+            max-width: 520px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            border: 2px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 10px 25px rgba(61,43,31,0.08);
+            text-align: center;
+        }
+
+        h2 {
+            font-family: 'Merriweather', serif;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .order-id {
+            font-size: 0.9rem;
+            color: #7A6B62;
+            margin-bottom: 1.5rem;
+        }
+
+        .qr-container {
+            background: white;
+            padding: 1rem;
+            border-radius: 12px;
+            display: inline-block;
+            border: 1px solid var(--border);
+            margin-bottom: 1.5rem;
+        }
+
+        .qr-image {
+            width: 260px;
+            height: 260px;
+            object-fit: contain;
+        }
+
+        .payment-info {
+            background-color: #FAF5ED;
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: left;
+            margin-bottom: 1.5rem;
+            font-size: 0.95rem;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .info-row:last-child { margin-bottom: 0; }
+
+        .btn-confirm {
+            width: 100%;
+            padding: 14px;
+            background-color: var(--green);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+
+        .btn-cancel {
+            background: none;
+            border: none;
+            color: #7A6B62;
+            cursor: pointer;
+            text-decoration: underline;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="checkout-card">
+        <h2>MÊ ĐÁ COFFEE</h2>
+        <div class="order-id" id="orderIdText">Mã đơn hàng: Loading...</div>
+
+        <p style="margin-bottom: 1rem; font-weight: 600;">Mở ứng dụng Ngân hàng / Quét mã VietQR để thanh toán</p>
+
+        <div class="qr-container">
+            <img id="qrImage" class="qr-image" src="" alt="Mã QR Thanh Toán">
+        </div>
+
+        <div class="payment-info">
+            <div class="info-row">
+                <span>Ngân hàng:</span>
+                <strong id="bankName">Loading...</strong>
+            </div>
+            <div class="info-row">
+                <span>Số tài khoản:</span>
+                <strong id="bankAcc">Loading...</strong>
+            </div>
+            <div class="info-row">
+                <span>Chủ tài khoản:</span>
+                <strong id="bankHolder">Loading...</strong>
+            </div>
+            <div class="info-row">
+                <span>Số tiền:</span>
+                <strong id="payAmount" style="color: var(--accent); font-size: 1.1rem;">0 VNĐ</strong>
+            </div>
+        </div>
+
+        <button class="btn-confirm" onclick="confirmPayment()">✅ Tôi Đã Chuyển Khoản Thành Công</button>
+        <button class="btn-cancel" onclick="cancelOrder()">Quay lại chỉnh sửa đơn hàng</button>
+    </div>
+
+    <script>
+        // Lấy thông tin đơn hàng hiện tại
+        const pendingOrder = JSON.parse(localStorage.getItem('meda_pending_order'));
+        
+        // Lấy cấu hình ngân hàng từ Admin
+        const bankConfig = JSON.parse(localStorage.getItem('meda_bank')) || {
+            bankId: 'MB', 
+            accountNo: '0987654321',
+            accountName: 'QUAN CA PHE ME DA'
+        };
+
+        // Lấy ảnh QR tùy chỉnh từ Admin (nếu có)
+        const customQR = localStorage.getItem('meda_qr_code');
+
+        if (!pendingOrder) {
+            alert("Không tìm thấy đơn hàng!");
+            window.location.href = "index.html";
+        } else {
+            // Đổ dữ liệu text ra giao diện
+            document.getElementById('orderIdText').textContent = `Mã đơn hàng: #${pendingOrder.orderId}`;
+            document.getElementById('payAmount').textContent = pendingOrder.total.toLocaleString('vi-VN') + ' VNĐ';
+            document.getElementById('bankName').textContent = bankConfig.bankId;
+            document.getElementById('bankAcc').textContent = bankConfig.accountNo;
+            document.getElementById('bankHolder').textContent = bankConfig.accountName;
+
+            // KIỂM TRA QUYẾT ĐỊNH HIỂN THỊ MÃ QR NÀO
+            if (customQR) {
+                // 1. Nếu Admin có tải ảnh QR tĩnh lên -> Hiển thị ảnh đó
+                document.getElementById('qrImage').src = customQR;
+            } else {
+                // 2. Nếu không có ảnh -> Tự động gọi API tạo mã VietQR theo số tiền và mã đơn hàng
+                const qrUrl = `https://img.vietqr.io/image/${bankConfig.bankId}-${bankConfig.accountNo}-compact2.png?amount=${pendingOrder.total}&addInfo=${pendingOrder.orderId}&accountName=${encodeURIComponent(bankConfig.accountName)}`;
+                document.getElementById('qrImage').src = qrUrl;
+            }
+        }
+
+        function confirmPayment() {
+            // 1. Trừ kho nguyên liệu
+            const inventory = JSON.parse(localStorage.getItem('meda_inventory')) || [];
+            
+            pendingOrder.items.forEach(cartItem => {
+                if (cartItem.recipe) {
+                    cartItem.recipe.forEach(recipeItem => {
+                        const ing = inventory.find(i => i.id === recipeItem.ingId);
+                        if (ing) {
+                            ing.quantity = Math.max(0, ing.quantity - (recipeItem.amount * cartItem.quantity));
+                        }
+                    });
+                }
+            });
+            localStorage.setItem('meda_inventory', JSON.stringify(inventory));
+
+            // 2. Lưu vào lịch sử đơn hàng
+            const orders = JSON.parse(localStorage.getItem('meda_orders')) || [];
+            orders.unshift({
+                ...pendingOrder,
+                status: 'Chờ xác nhận / Đã thanh toán'
+            });
+            localStorage.setItem('meda_orders', JSON.stringify(orders));
+
+            // 3. Tự động tính vào Tổng Doanh Thu báo cáo trong Admin
+            const currentRevenue = parseFloat(localStorage.getItem('meda_total_revenue')) || 0;
+            localStorage.setItem('meda_total_revenue', currentRevenue + pendingOrder.total);
+
+            // 4. Xóa đơn hàng chờ
+            localStorage.removeItem('meda_pending_order');
+
+            alert("Cảm ơn quý khách! Đơn hàng đã hoàn tất và được chuyển đến quầy pha chế.");
+            window.location.href = "index.html";
+        }
+
+        function cancelOrder() {
+            window.location.href = "index.html";
+        }
+    </script>
+</body>
+</html>

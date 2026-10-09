@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Báo Cáo Chi Tiết - Mê Đá Coffee</title>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Tích hợp Chart.js để vẽ biểu đồ -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-color: #FBF6EE;
+            --card-bg: #FFFDF9;
+            --primary: #3D2B1F;
+            --accent: #C85A32;
+            --border: #E8DFC8;
+            --green: #2E7D32;
+            --red: #C62828;
+            --blue: #1565C0;
+            --amber: #EF6C00;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg-color); color: #2B1E16; padding-bottom: 3rem; }
+
+        header { background-color: var(--primary); color: #FAF4EB; padding: 1.2rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+        header h1 { font-family: 'Merriweather', serif; font-size: 1.5rem; }
+        .btn-header { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; text-decoration: none; font-size: 0.9rem;}
+        .btn-header:hover { background: rgba(255,255,255,0.25); }
+
+        .main-content { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
+
+        .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .stat-card { background: var(--card-bg); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.03); text-align: center; }
+        .stat-card h4 { font-size: 0.95rem; color: #666; margin-bottom: 10px; font-weight: 600; }
+        .stat-card .value { font-size: 2rem; font-weight: 700; font-family: 'Merriweather', serif; }
+        
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+        @media (max-width: 900px) { .grid-2 { grid-template-columns: 1fr; } }
+
+        .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
+        .card h3 { font-family: 'Merriweather', serif; color: var(--primary); margin-bottom: 1rem; border-bottom: 2px solid var(--border); padding-bottom: 0.5rem; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; }
+        th, td { text-align: left; padding: 12px 10px; border-bottom: 1px solid var(--border); font-size: 0.95rem; }
+        th { background-color: #FAF5ED; color: var(--primary); font-weight: 700;}
+        tr:hover { background-color: #fcf9f2; }
+        .rank-badge { display: inline-block; width: 24px; height: 24px; text-align: center; line-height: 24px; border-radius: 50%; background: #e0e0e0; color: #333; font-weight: bold; font-size: 0.8rem;}
+        .rank-1 { background: #FFD700; color: #855A00; }
+        .rank-2 { background: #E0E0E0; color: #4F4F4F; }
+        .rank-3 { background: #CD7F32; color: #5C3A21; }
+
+        .chart-container { position: relative; height: 300px; width: 100%; }
+        
+        #errorMsg { display: none; background: #FFEBEE; color: var(--red); padding: 1rem; border-radius: 8px; text-align: center; margin-bottom: 1rem; border: 1px solid #ffcdd2;}
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>📊 Báo Cáo & Thống Kê</h1>
+        <div>
+            <a href="admin.html" class="btn-header">⬅ Trở về Quản Trị</a>
+        </div>
+    </header>
+
+    <div class="main-content">
+        <div id="errorMsg">Chưa có dữ liệu đơn hàng nào được ghi nhận. Hãy đảm bảo trang Đặt Hàng đã lưu danh sách đơn vào LocalStorage (key: 'meda_orders').</div>
+
+        <!-- TỔNG QUAN TÀI CHÍNH -->
+        <div class="summary-grid">
+            <div class="stat-card" style="border-bottom: 4px solid var(--blue);">
+                <h4>Tổng Doanh Thu</h4>
+                <div class="value" id="valRevenue" style="color: var(--blue);">0 đ</div>
+            </div>
+            <div class="stat-card" style="border-bottom: 4px solid var(--amber);">
+                <h4>Tổng Chi Phí (Nguyên liệu + Cố định)</h4>
+                <div class="value" id="valCosts" style="color: var(--amber);">0 đ</div>
+            </div>
+            <div class="stat-card" id="profitCard" style="border-bottom: 4px solid var(--green);">
+                <h4>Lợi Nhuận Ròng</h4>
+                <div class="value" id="valProfit" style="color: var(--green);">0 đ</div>
+            </div>
+            <div class="stat-card" style="border-bottom: 4px solid var(--primary);">
+                <h4>Tổng Số Ly Đã Bán</h4>
+                <div class="value" id="valTotalCups" style="color: var(--primary);">0</div>
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <!-- BIỂU ĐỒ DOANH THU & CHI PHÍ -->
+            <div class="card">
+                <h3>Thống Kê Tài Chính</h3>
+                <div class="chart-container">
+                    <canvas id="financeChart"></canvas>
+                </div>
+            </div>
+
+            <!-- BIỂU ĐỒ SẢN PHẨM BÁN CHẠY -->
+            <div class="card">
+                <h3>Top Sản Phẩm Bán Chạy Nhất</h3>
+                <div class="chart-container">
+                    <canvas id="salesChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- BẢNG CHI TIẾT SỐ LƯỢNG SẢN PHẨM BÁN ĐƯỢC -->
+        <div class="card">
+            <h3>Chi Tiết Sản Phẩm Tiêu Thụ</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 60px; text-align: center;">Top</th>
+                        <th>Tên Sản Phẩm</th>
+                        <th style="text-align: right;">Số Lượng Đã Bán</th>
+                        <th style="text-align: right;">Doanh Thu Mang Lại</th>
+                    </tr>
+                </thead>
+                <tbody id="salesTableBody">
+                    <!-- Dữ liệu được render bằng JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // KIỂM TRA QUYỀN TRUY CẬP (Bảo mật như admin)
+        if (sessionStorage.getItem('meda_admin_logged_in') !== 'true') {
+            window.location.href = 'admin.html';
+        }
+
+        // FORMAT TIỀN TỆ
+        const formatMoney = (amount) => amount.toLocaleString('vi-VN') + " đ";
+
+        function loadReportData() {
+            // Lấy dữ liệu tài chính chung
+            let revenue = parseFloat(localStorage.getItem('meda_total_revenue')) || 0;
+            let finance = JSON.parse(localStorage.getItem('meda_finance')) || { fixedCosts: 0, ingredientCosts: 0 };
+            let totalCosts = finance.fixedCosts + finance.ingredientCosts;
+            let profit = revenue - totalCosts;
+
+            // Cập nhật thẻ Tổng quan
+            document.getElementById('valRevenue').innerText = formatMoney(revenue);
+            document.getElementById('valCosts').innerText = formatMoney(totalCosts);
+            document.getElementById('valProfit').innerText = formatMoney(profit);
+            
+            if (profit < 0) {
+                document.getElementById('valProfit').style.color = 'var(--red)';
+                document.getElementById('profitCard').style.borderBottomColor = 'var(--red)';
+            }
+
+            // Lấy lịch sử đơn hàng để tính số ly bán ra
+            // GIẢ ĐỊNH: Trang Đặt Hàng lưu dữ liệu mảng các đơn hàng vào 'meda_orders'
+            let orders = JSON.parse(localStorage.getItem('meda_orders')) || [];
+            
+            // Xử lý thống kê sản phẩm
+            let productStats = {};
+            let totalCups = 0;
+
+            if (orders.length > 0) {
+                orders.forEach(order => {
+                    // Giả sử cấu trúc: order.items = [{id, name, quantity, price}, ...]
+                    if (order.items && Array.isArray(order.items)) {
+                        order.items.forEach(item => {
+                            if (!productStats[item.id]) {
+                                productStats[item.id] = { name: item.name, quantity: 0, revenue: 0 };
+                            }
+                            productStats[item.id].quantity += item.quantity;
+                            productStats[item.id].revenue += (item.price * item.quantity);
+                            totalCups += item.quantity;
+                        });
+                    }
+                });
+            } else {
+                // Nếu chưa có hệ thống lưu 'meda_orders', hiện thông báo
+                document.getElementById('errorMsg').style.display = 'block';
+            }
+
+            document.getElementById('valTotalCups').innerText = totalCups + " ly";
+
+            // Chuyển object thống kê thành mảng để sắp xếp
+            let salesArray = Object.values(productStats);
+            salesArray.sort((a, b) => b.quantity - a.quantity); // Sắp xếp giảm dần theo số lượng
+
+            renderSalesTable(salesArray);
+            drawCharts(revenue, finance.ingredientCosts, finance.fixedCosts, profit, salesArray);
+        }
+
+        function renderSalesTable(salesArray) {
+            const tbody = document.getElementById('salesTableBody');
+            tbody.innerHTML = '';
+            
+            if (salesArray.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#888;">Chưa có dữ liệu bán hàng.</td></tr>';
+                return;
+            }
+
+            salesArray.forEach((item, index) => {
+                let rankClass = '';
+                if (index === 0) rankClass = 'rank-1';
+                else if (index === 1) rankClass = 'rank-2';
+                else if (index === 2) rankClass = 'rank-3';
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="text-align: center;"><span class="rank-badge ${rankClass}">${index + 1}</span></td>
+                        <td><strong>${item.name}</strong></td>
+                        <td style="text-align: right; color: var(--primary); font-weight: bold;">${item.quantity}</td>
+                        <td style="text-align: right; color: var(--green);">${formatMoney(item.revenue)}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        function drawCharts(revenue, ingCosts, fixedCosts, profit, salesArray) {
+            // 1. Biểu đồ Tài Chính (Pie Chart)
+            const ctxFinance = document.getElementById('financeChart').getContext('2d');
+            
+            // Nếu lỗ, biểu đồ lợi nhuận sẽ là 0, bù vào khoản lỗ
+            let displayProfit = profit > 0 ? profit : 0;
+            
+            new Chart(ctxFinance, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Chi phí Nguyên Liệu', 'Chi phí Khác', 'Lợi Nhuận'],
+                    datasets: [{
+                        data: [ingCosts, fixedCosts, displayProfit],
+                        backgroundColor: ['#EF6C00', '#C62828', '#2E7D32'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+
+            // 2. Biểu đồ Sản Phẩm Bán Chạy (Bar Chart - Top 5)
+            const ctxSales = document.getElementById('salesChart').getContext('2d');
+            let top5 = salesArray.slice(0, 5); // Lấy 5 món cao nhất
+            let labels = top5.map(item => item.name);
+            let data = top5.map(item => item.quantity);
+
+            new Chart(ctxSales, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Số lượng đã bán',
+                        data: data,
+                        backgroundColor: '#C85A32',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, ticks: { stepSize: 1 } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        // Chạy dữ liệu khi tải trang
+        window.onload = loadReportData;
+    </script>
+</body>
+</html>
