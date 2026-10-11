@@ -5,8 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Báo Cáo Chi Tiết - Mê Đá Coffee</title>
     <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    
     <!-- Tích hợp Chart.js để vẽ biểu đồ -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Tích hợp html2pdf.js để xuất file PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
     <style>
         :root {
             --bg-color: #FBF6EE;
@@ -30,6 +35,17 @@
 
         .main-content { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
 
+        /* BỘ LỌC BÁO CÁO */
+        .filter-box { background: var(--card-bg); padding: 1rem 1.5rem; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.03); margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;}
+        .filter-group { display: flex; gap: 10px; align-items: center; }
+        .filter-group label { font-weight: 600; font-size: 0.9rem; color: var(--primary); }
+        .filter-group input[type="date"], .filter-group input[type="month"], .filter-group select { padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; font-family: inherit; }
+        
+        .btn-action { padding: 8px 16px; background-color: var(--accent); color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s;}
+        .btn-action:hover { background-color: #A03C1B; }
+        .btn-export { background-color: var(--blue); }
+        .btn-export:hover { background-color: #0d47a1; }
+
         .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
         .stat-card { background: var(--card-bg); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.03); text-align: center; }
         .stat-card h4 { font-size: 0.95rem; color: #666; margin-bottom: 10px; font-weight: 600; }
@@ -41,6 +57,7 @@
         .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
         .card h3 { font-family: 'Merriweather', serif; color: var(--primary); margin-bottom: 1rem; border-bottom: 2px solid var(--border); padding-bottom: 0.5rem; }
 
+        /* BẢNG TỔNG QUAN (Xếp hạng) */
         table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; }
         th, td { text-align: left; padding: 12px 10px; border-bottom: 1px solid var(--border); font-size: 0.95rem; }
         th { background-color: #FAF5ED; color: var(--primary); font-weight: 700;}
@@ -50,9 +67,23 @@
         .rank-2 { background: #E0E0E0; color: #4F4F4F; }
         .rank-3 { background: #CD7F32; color: #5C3A21; }
 
+        /* BẢNG CHI TIẾT THEO CHUẨN EXCEL */
+        .excel-table { width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.85rem; }
+        .excel-table th, .excel-table td { border: 1px solid #dcdcdc; padding: 8px 10px; }
+        .excel-table th { background-color: #f1f3f4; color: #333; font-weight: bold; text-align: center; text-transform: uppercase; font-size: 0.8rem;}
+        .excel-table td { background-color: #fff; color: #333; }
+        .excel-table tr:nth-child(even) td { background-color: #f9f9f9; }
+
         .chart-container { position: relative; height: 300px; width: 100%; }
         
         #errorMsg { display: none; background: #FFEBEE; color: var(--red); padding: 1rem; border-radius: 8px; text-align: center; margin-bottom: 1rem; border: 1px solid #ffcdd2;}
+
+        /* Lớp dùng để định dạng riêng khi xuất PDF */
+        .pdf-mode {
+            padding: 20px !important;
+            background: white !important;
+        }
+        .pdf-mode .filter-box { display: none !important; }
     </style>
 </head>
 <body>
@@ -65,63 +96,123 @@
     </header>
 
     <div class="main-content">
-        <div id="errorMsg">Chưa có dữ liệu đơn hàng nào được ghi nhận. Hãy đảm bảo trang Đặt Hàng đã lưu danh sách đơn vào LocalStorage (key: 'meda_orders').</div>
+        <div id="errorMsg">Chưa có dữ liệu đơn hàng nào được ghi nhận. Hệ thống đang lấy dữ liệu mặc định (hoặc mảng trống).</div>
 
-        <!-- TỔNG QUAN TÀI CHÍNH -->
-        <div class="summary-grid">
-            <div class="stat-card" style="border-bottom: 4px solid var(--blue);">
-                <h4>Tổng Doanh Thu</h4>
-                <div class="value" id="valRevenue" style="color: var(--blue);">0 đ</div>
+        <!-- BỘ LỌC THỜI GIAN -->
+        <div class="filter-box">
+            <div class="filter-group">
+                <label>Lọc Báo Cáo Theo:</label>
+                <select id="filterType" onchange="toggleFilterInputs()">
+                    <option value="all">Toàn bộ thời gian</option>
+                    <option value="day">Theo Ngày</option>
+                    <option value="month">Theo Tháng</option>
+                    <option value="year">Theo Năm</option>
+                </select>
+
+                <input type="date" id="filterDay" style="display:none;">
+                <input type="month" id="filterMonth" style="display:none;">
+                <select id="filterYear" style="display:none;">
+                    <option value="2026">2026</option>
+                    <option value="2025">2025</option>
+                    <option value="2024">2024</option>
+                </select>
+
+                <button class="btn-action" onclick="loadReportData()">Lọc Dữ Liệu</button>
             </div>
-            <div class="stat-card" style="border-bottom: 4px solid var(--amber);">
-                <h4>Tổng Chi Phí (Nguyên liệu + Cố định)</h4>
-                <div class="value" id="valCosts" style="color: var(--amber);">0 đ</div>
-            </div>
-            <div class="stat-card" id="profitCard" style="border-bottom: 4px solid var(--green);">
-                <h4>Lợi Nhuận Ròng</h4>
-                <div class="value" id="valProfit" style="color: var(--green);">0 đ</div>
-            </div>
-            <div class="stat-card" style="border-bottom: 4px solid var(--primary);">
-                <h4>Tổng Số Ly Đã Bán</h4>
-                <div class="value" id="valTotalCups" style="color: var(--primary);">0</div>
+            <div>
+                <button class="btn-action btn-export" onclick="exportToPDF()">📥 Xuất Báo Cáo PDF</button>
             </div>
         </div>
 
-        <div class="grid-2">
-            <!-- BIỂU ĐỒ DOANH THU & CHI PHÍ -->
-            <div class="card">
-                <h3>Thống Kê Tài Chính</h3>
-                <div class="chart-container">
-                    <canvas id="financeChart"></canvas>
+        <!-- KHU VỰC CẦN XUẤT PDF (Bắt đầu) -->
+        <div id="reportContent">
+            <h2 id="reportTitle" style="text-align: center; color: var(--primary); margin-bottom: 1.5rem; font-family: 'Merriweather', serif; display: none;">BÁO CÁO HOẠT ĐỘNG KINH DOANH</h2>
+            
+            <!-- TỔNG QUAN TÀI CHÍNH -->
+            <div class="summary-grid">
+                <div class="stat-card" style="border-bottom: 4px solid var(--blue);">
+                    <h4>Doanh Thu</h4>
+                    <div class="value" id="valRevenue" style="color: var(--blue);">0 đ</div>
+                </div>
+                <div class="stat-card" style="border-bottom: 4px solid var(--amber);">
+                    <h4>Chi Phí (Nguyên liệu + Khác)</h4>
+                    <div class="value" id="valCosts" style="color: var(--amber);">0 đ</div>
+                    <div style="font-size: 0.75rem; color:#888; margin-top:5px;">*Chi phí không phân bổ theo ngày</div>
+                </div>
+                <div class="stat-card" id="profitCard" style="border-bottom: 4px solid var(--green);">
+                    <h4>Lợi Nhuận Ròng</h4>
+                    <div class="value" id="valProfit" style="color: var(--green);">0 đ</div>
+                </div>
+                <div class="stat-card" style="border-bottom: 4px solid var(--primary);">
+                    <h4>Tổng Số Ly Đã Bán</h4>
+                    <div class="value" id="valTotalCups" style="color: var(--primary);">0</div>
                 </div>
             </div>
 
-            <!-- BIỂU ĐỒ SẢN PHẨM BÁN CHẠY -->
-            <div class="card">
-                <h3>Top Sản Phẩm Bán Chạy Nhất</h3>
-                <div class="chart-container">
-                    <canvas id="salesChart"></canvas>
+            <div class="grid-2">
+                <!-- BIỂU ĐỒ DOANH THU & CHI PHÍ -->
+                <div class="card">
+                    <h3>Cơ Cấu Tài Chính</h3>
+                    <div class="chart-container">
+                        <canvas id="financeChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- BIỂU ĐỒ SẢN PHẨM BÁN CHẠY -->
+                <div class="card">
+                    <h3>Top 5 Món Bán Chạy Nhất</h3>
+                    <div class="chart-container">
+                        <canvas id="salesChart"></canvas>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- BẢNG CHI TIẾT SỐ LƯỢNG SẢN PHẨM BÁN ĐƯỢC -->
-        <div class="card">
-            <h3>Chi Tiết Sản Phẩm Tiêu Thụ</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th style="width: 60px; text-align: center;">Top</th>
-                        <th>Tên Sản Phẩm</th>
-                        <th style="text-align: right;">Số Lượng Đã Bán</th>
-                        <th style="text-align: right;">Doanh Thu Mang Lại</th>
-                    </tr>
-                </thead>
-                <tbody id="salesTableBody">
-                    <!-- Dữ liệu được render bằng JS -->
-                </tbody>
-            </table>
-        </div>
+            <!-- BẢNG TỔNG KẾT MÓN BÁN CHẠY -->
+            <div class="card">
+                <h3>Chi Tiết Sản Phẩm Tiêu Thụ</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 60px; text-align: center;">Top</th>
+                            <th>Tên Sản Phẩm</th>
+                            <th style="text-align: right;">Số Lượng Đã Bán</th>
+                            <th style="text-align: right;">Doanh Thu Mang Lại</th>
+                        </tr>
+                    </thead>
+                    <tbody id="salesTableBody">
+                        <!-- Dữ liệu được render bằng JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- BẢNG KÊ CHI TIẾT BÁN HÀNG (GIỐNG ĐỊNH DẠNG EXCEL YÊU CẦU) -->
+            <div class="card" style="margin-top: 1.5rem;">
+                <h3 style="display: flex; justify-content: space-between; align-items: center;">
+                    Dữ Liệu Bán Hàng Chi Tiết
+                    <span style="font-size: 0.75rem; font-weight: normal; color: #555; background: #eee; padding: 4px 8px; border-radius: 4px; font-family: 'Plus Jakarta Sans', sans-serif;">Dạng Bảng Kê (Excel)</span>
+                </h3>
+                <div style="overflow-x: auto;">
+                    <table class="excel-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">STT</th>
+                                <th>Ngày HĐ</th>
+                                <th>Tên Sản Phẩm</th>
+                                <th style="text-align: right;">Số Lượng</th>
+                                <th style="text-align: right;">Đơn Giá</th>
+                                <th style="text-align: right;">Doanh Thu</th>
+                            </tr>
+                        </thead>
+                        <tbody id="detailTableBody">
+                            <!-- Dữ liệu được render bằng JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div> 
+        <!-- KẾT THÚC KHU VỰC PDF -->
+
     </div>
 
     <script>
@@ -130,69 +221,124 @@
             window.location.href = 'admin.html';
         }
 
-        // FORMAT TIỀN TỆ
-        const formatMoney = (amount) => amount.toLocaleString('vi-VN') + " đ";
+        const formatMoney = (amount) => amount.toLocaleString('vi-VN');
+        let financeChartInstance = null;
+        let salesChartInstance = null;
 
+        // XỬ LÝ GIAO DIỆN LỌC
+        function toggleFilterInputs() {
+            const filterType = document.getElementById('filterType').value;
+            document.getElementById('filterDay').style.display = filterType === 'day' ? 'inline-block' : 'none';
+            document.getElementById('filterMonth').style.display = filterType === 'month' ? 'inline-block' : 'none';
+            document.getElementById('filterYear').style.display = filterType === 'year' ? 'inline-block' : 'none';
+        }
+
+        // HÀM LỌC ĐƠN HÀNG DỰA TRÊN NGÀY TẠO (createdAt)
+        function filterOrders(orders, filterType) {
+            if (filterType === 'all') return orders;
+
+            let targetString = "";
+            if (filterType === 'day') {
+                const dateVal = document.getElementById('filterDay').value; // Format: YYYY-MM-DD
+                if(!dateVal) return orders;
+                const d = new Date(dateVal);
+                // Tạo chuỗi giống định dạng lưu trong đơn hàng: DD/MM/YYYY
+                targetString = `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`;
+            } 
+            else if (filterType === 'month') {
+                const monthVal = document.getElementById('filterMonth').value; // Format: YYYY-MM
+                if(!monthVal) return orders;
+                const [year, month] = monthVal.split('-');
+                targetString = `${month}/${year}`; // DD/MM/YYYY -> Kiểm tra chuỗi con chứa MM/YYYY
+            } 
+            else if (filterType === 'year') {
+                targetString = document.getElementById('filterYear').value;
+            }
+
+            // Lọc ra các đơn hàng mà createdAt (VD: 25/10/2026, 14:30:00) có chứa chuỗi mục tiêu
+            return orders.filter(order => order.createdAt && order.createdAt.includes(targetString));
+        }
+
+        // HÀM TẢI & TÍNH TOÁN DỮ LIỆU
         function loadReportData() {
-            // Lấy dữ liệu tài chính chung
-            let revenue = parseFloat(localStorage.getItem('meda_total_revenue')) || 0;
+            const filterType = document.getElementById('filterType').value;
+            
+            // 1. Lấy dữ liệu chi phí 
             let finance = JSON.parse(localStorage.getItem('meda_finance')) || { fixedCosts: 0, ingredientCosts: 0 };
             let totalCosts = finance.fixedCosts + finance.ingredientCosts;
-            let profit = revenue - totalCosts;
 
-            // Cập nhật thẻ Tổng quan
-            document.getElementById('valRevenue').innerText = formatMoney(revenue);
-            document.getElementById('valCosts').innerText = formatMoney(totalCosts);
-            document.getElementById('valProfit').innerText = formatMoney(profit);
+            // 2. Lấy dữ liệu đơn hàng và tiến hành lọc
+            let allOrders = JSON.parse(localStorage.getItem('meda_orders')) || [];
+            let filteredOrders = filterOrders(allOrders, filterType);
+
+            if (allOrders.length === 0) {
+                document.getElementById('errorMsg').style.display = 'block';
+            } else {
+                document.getElementById('errorMsg').style.display = 'none';
+            }
+
+            // 3. Tính toán Doanh thu, Lợi nhuận và Sản phẩm dựa trên đơn hàng ĐÃ LỌC
+            let filteredRevenue = 0;
+            let productStats = {};
+            let totalCups = 0;
+
+            filteredOrders.forEach(order => {
+                filteredRevenue += order.total;
+                if (order.items && Array.isArray(order.items)) {
+                    order.items.forEach(item => {
+                        if (!productStats[item.id]) {
+                            productStats[item.id] = { name: item.name, quantity: 0, revenue: 0 };
+                        }
+                        productStats[item.id].quantity += item.quantity;
+                        productStats[item.id].revenue += (item.price * item.quantity);
+                        totalCups += item.quantity;
+                    });
+                }
+            });
+
+            // Lợi nhuận = Doanh thu lọc được - Tổng chi phí chung
+            let profit = filteredRevenue - totalCosts;
+
+            // 4. Cập nhật giao diện (Thẻ tổng quan)
+            document.getElementById('valRevenue').innerText = formatMoney(filteredRevenue) + " đ";
+            document.getElementById('valCosts').innerText = formatMoney(totalCosts) + " đ";
+            document.getElementById('valProfit').innerText = formatMoney(profit) + " đ";
             
             if (profit < 0) {
                 document.getElementById('valProfit').style.color = 'var(--red)';
                 document.getElementById('profitCard').style.borderBottomColor = 'var(--red)';
-            }
-
-            // Lấy lịch sử đơn hàng để tính số ly bán ra
-            // GIẢ ĐỊNH: Trang Đặt Hàng lưu dữ liệu mảng các đơn hàng vào 'meda_orders'
-            let orders = JSON.parse(localStorage.getItem('meda_orders')) || [];
-            
-            // Xử lý thống kê sản phẩm
-            let productStats = {};
-            let totalCups = 0;
-
-            if (orders.length > 0) {
-                orders.forEach(order => {
-                    // Giả sử cấu trúc: order.items = [{id, name, quantity, price}, ...]
-                    if (order.items && Array.isArray(order.items)) {
-                        order.items.forEach(item => {
-                            if (!productStats[item.id]) {
-                                productStats[item.id] = { name: item.name, quantity: 0, revenue: 0 };
-                            }
-                            productStats[item.id].quantity += item.quantity;
-                            productStats[item.id].revenue += (item.price * item.quantity);
-                            totalCups += item.quantity;
-                        });
-                    }
-                });
             } else {
-                // Nếu chưa có hệ thống lưu 'meda_orders', hiện thông báo
-                document.getElementById('errorMsg').style.display = 'block';
+                document.getElementById('valProfit').style.color = 'var(--green)';
+                document.getElementById('profitCard').style.borderBottomColor = 'var(--green)';
             }
 
             document.getElementById('valTotalCups').innerText = totalCups + " ly";
 
-            // Chuyển object thống kê thành mảng để sắp xếp
+            // 5. Cập nhật Bảng Top và Biểu đồ
             let salesArray = Object.values(productStats);
-            salesArray.sort((a, b) => b.quantity - a.quantity); // Sắp xếp giảm dần theo số lượng
+            salesArray.sort((a, b) => b.quantity - a.quantity);
 
             renderSalesTable(salesArray);
-            drawCharts(revenue, finance.ingredientCosts, finance.fixedCosts, profit, salesArray);
+            drawCharts(filteredRevenue, finance.ingredientCosts, finance.fixedCosts, profit, salesArray);
+
+            // 6. Cập nhật Bảng Kê Chi Tiết (Giống Excel)
+            renderDetailTable(filteredOrders);
+
+            // Cập nhật tiêu đề báo cáo ẩn để chuẩn bị xuất PDF
+            let pdfTitle = "BÁO CÁO HOẠT ĐỘNG KINH DOANH";
+            if (filterType === 'day') pdfTitle += " NGÀY " + document.getElementById('filterDay').value;
+            if (filterType === 'month') pdfTitle += " THÁNG " + document.getElementById('filterMonth').value;
+            if (filterType === 'year') pdfTitle += " NĂM " + document.getElementById('filterYear').value;
+            document.getElementById('reportTitle').innerText = pdfTitle;
         }
 
+        // BẢNG 1: BẢNG TỔNG QUAN XẾP HẠNG
         function renderSalesTable(salesArray) {
             const tbody = document.getElementById('salesTableBody');
             tbody.innerHTML = '';
             
             if (salesArray.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#888;">Chưa có dữ liệu bán hàng.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#888;">Không có dữ liệu bán hàng trong khoảng thời gian này.</td></tr>';
                 return;
             }
 
@@ -207,20 +353,58 @@
                         <td style="text-align: center;"><span class="rank-badge ${rankClass}">${index + 1}</span></td>
                         <td><strong>${item.name}</strong></td>
                         <td style="text-align: right; color: var(--primary); font-weight: bold;">${item.quantity}</td>
-                        <td style="text-align: right; color: var(--green);">${formatMoney(item.revenue)}</td>
+                        <td style="text-align: right; color: var(--green);">${formatMoney(item.revenue)} đ</td>
                     </tr>
                 `;
             });
         }
 
-        function drawCharts(revenue, ingCosts, fixedCosts, profit, salesArray) {
-            // 1. Biểu đồ Tài Chính (Pie Chart)
-            const ctxFinance = document.getElementById('financeChart').getContext('2d');
+        // BẢNG 2: BẢNG CHI TIẾT EXCEL
+        function renderDetailTable(filteredOrders) {
+            const tbody = document.getElementById('detailTableBody');
+            tbody.innerHTML = '';
             
-            // Nếu lỗ, biểu đồ lợi nhuận sẽ là 0, bù vào khoản lỗ
+            if (filteredOrders.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#888;">Không có dữ liệu chi tiết.</td></tr>';
+                return;
+            }
+
+            let detailHTML = '';
+            let stt = 1;
+
+            filteredOrders.forEach(order => {
+                let ngayHD = order.createdAt; // Ngày HĐ
+
+                if (order.items && Array.isArray(order.items)) {
+                    order.items.forEach(item => {
+                        let doanhThu = item.price * item.quantity;
+                        detailHTML += `
+                            <tr>
+                                <td style="text-align: center;">${stt++}</td>
+                                <td style="text-align: center;">${ngayHD}</td>
+                                <td><strong>${item.name}</strong></td>
+                                <td style="text-align: right;">${item.quantity}</td>
+                                <td style="text-align: right;">${formatMoney(item.price)}</td>
+                                <td style="text-align: right; color: var(--green); font-weight: bold;">${formatMoney(doanhThu)}</td>
+                            </tr>
+                        `;
+                    });
+                }
+            });
+
+            tbody.innerHTML = detailHTML;
+        }
+
+        function drawCharts(revenue, ingCosts, fixedCosts, profit, salesArray) {
+            // Hủy biểu đồ cũ nếu có để tránh lỗi chồng lớp của ChartJS
+            if (financeChartInstance) financeChartInstance.destroy();
+            if (salesChartInstance) salesChartInstance.destroy();
+
+            // 1. Biểu đồ Tài Chính
+            const ctxFinance = document.getElementById('financeChart').getContext('2d');
             let displayProfit = profit > 0 ? profit : 0;
             
-            new Chart(ctxFinance, {
+            financeChartInstance = new Chart(ctxFinance, {
                 type: 'doughnut',
                 data: {
                     labels: ['Chi phí Nguyên Liệu', 'Chi phí Khác', 'Lợi Nhuận'],
@@ -230,20 +414,16 @@
                         borderWidth: 1
                     }]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { position: 'bottom' } }
-                }
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, animation: false }
             });
 
             // 2. Biểu đồ Sản Phẩm Bán Chạy (Bar Chart - Top 5)
             const ctxSales = document.getElementById('salesChart').getContext('2d');
-            let top5 = salesArray.slice(0, 5); // Lấy 5 món cao nhất
+            let top5 = salesArray.slice(0, 5);
             let labels = top5.map(item => item.name);
             let data = top5.map(item => item.quantity);
 
-            new Chart(ctxSales, {
+            salesChartInstance = new Chart(ctxSales, {
                 type: 'bar',
                 data: {
                     labels: labels,
@@ -255,18 +435,49 @@
                     }]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: { beginAtZero: true, ticks: { stepSize: 1 } }
-                    },
+                    responsive: true, maintainAspectRatio: false, animation: false,
+                    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } },
                     plugins: { legend: { display: false } }
                 }
             });
         }
 
-        // Chạy dữ liệu khi tải trang
-        window.onload = loadReportData;
+        // HÀM XUẤT FILE PDF BẰNG HTML2PDF
+        function exportToPDF() {
+            const element = document.getElementById('reportContent');
+            const title = document.getElementById('reportTitle');
+            
+            // Hiện tiêu đề riêng cho PDF
+            title.style.display = 'block';
+            element.classList.add('pdf-mode');
+
+            // Cấu hình PDF
+            const opt = {
+                margin:       [10, 10, 10, 10],
+                filename:     'Bao_Cao_Chi_Tiet_Me_Da_Coffee.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak:    { mode: ['css', 'legacy'] }
+            };
+
+            // Tiến hành xuất PDF
+            html2pdf().set(opt).from(element).save().then(() => {
+                // Phục hồi lại giao diện sau khi xuất xong
+                title.style.display = 'none';
+                element.classList.remove('pdf-mode');
+            });
+        }
+
+        // Mặc định load toàn bộ thời gian khi mới vào trang
+        window.onload = () => {
+            const today = new Date();
+            const currMonth = today.getFullYear() + '-' + (today.getMonth() + 1).toString().padStart(2, '0');
+            document.getElementById('filterType').value = 'all';
+            document.getElementById('filterMonth').value = currMonth;
+            toggleFilterInputs();
+            loadReportData();
+        };
     </script>
 </body>
 </html>

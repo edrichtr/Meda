@@ -7,37 +7,23 @@
     <link href="logo.jpg" rel="icon" type="image/x-icon">
     <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --bg-color: #FBF6EE;
-            --card-bg: #FFFDF9;
-            --primary: #3D2B1F;
-            --accent: #C85A32;
-            --accent-hover: #A03C1B;
-            --text-main: #2B1E16;
-            --text-muted: #7A6B62;
-            --border: #E8DFC8;
-            --green: #2E7D32;
-            --red: #C62828;
-        }
-
+        :root { --bg-color: #FBF6EE; --card-bg: #FFFDF9; --primary: #3D2B1F; --accent: #C85A32; --accent-hover: #A03C1B; --text-main: #2B1E16; --text-muted: #7A6B62; --border: #E8DFC8; --green: #2E7D32; --red: #C62828; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg-color); color: var(--text-main); line-height: 1.5; }
-
+        
         header { background-color: var(--primary); color: #FAF4EB; padding: 2rem 2rem; text-align: center; border-bottom: 4px solid var(--accent); position: relative; display: flex; flex-direction: column; align-items: center; }
         .logo { width: 90px; height: 90px; object-fit: cover; border-radius: 50%; border: 3px solid var(--accent); margin-bottom: 12px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); background-color: #FFFDF9; }
         header h1 { font-family: 'Merriweather', serif; font-size: 2.2rem; letter-spacing: 1px; color: #F3E5D8; }
         header p { font-size: 0.95rem; color: #D2C2B4; font-style: italic; }
         
-        .admin-link { position: absolute; right: 1.5rem; top: 1.8rem; color: #F3E5D8; text-decoration: none; font-size: 0.85rem; background: rgba(255,255,255,0.1); padding: 6px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2); transition: all 0.2s; }
-        .admin-link:hover { background: var(--accent); border-color: var(--accent); }
+        /* Chỉnh lại phần nút góc phải cho gọn */
+        .top-links { position: absolute; right: 1.5rem; top: 1.5rem; display: flex; flex-direction: column; gap: 8px; }
+        .nav-link { color: #F3E5D8; text-decoration: none; font-size: 0.85rem; background: rgba(255,255,255,0.1); padding: 6px 14px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2); transition: all 0.2s; font-weight: 600; text-align: center; }
+        .nav-link:hover { background: var(--accent); border-color: var(--accent); }
+        @media (max-width: 600px) { .top-links { position: static; flex-direction: row; margin-top: 15px; } }
 
         /* --- BẢNG SỰ KIỆN --- */
-        #dynamicEventBanner {
-            max-width: 1200px; margin: 1.5rem auto 0; padding: 1rem 1.5rem;
-            border: 2px dashed var(--accent); border-radius: 12px;
-            display: none; align-items: center; justify-content: space-between;
-            box-shadow: 0 4px 10px rgba(200, 90, 50, 0.1); animation: pulseBanner 3s infinite;
-        }
+        #dynamicEventBanner { max-width: 1200px; margin: 1.5rem auto 0; padding: 1rem 1.5rem; border: 2px dashed var(--accent); border-radius: 12px; display: none; align-items: center; justify-content: space-between; box-shadow: 0 4px 10px rgba(200, 90, 50, 0.1); animation: pulseBanner 3s infinite; }
         @keyframes pulseBanner { 0% { box-shadow: 0 4px 10px rgba(200, 90, 50, 0.1); } 50% { box-shadow: 0 4px 20px rgba(200, 90, 50, 0.3); } 100% { box-shadow: 0 4px 10px rgba(200, 90, 50, 0.1); } }
         .event-content h3 { color: var(--red); font-family: 'Merriweather', serif; font-size: 1.3rem; margin-bottom: 0.3rem; display: flex; align-items: center; gap: 8px; }
         .event-badge { background: var(--red); color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; animation: blinkText 1s infinite; }
@@ -50,6 +36,7 @@
         .menu-title { font-family: 'Merriweather', serif; font-size: 1.5rem; margin-bottom: 1.2rem; padding-bottom: 0.5rem; border-bottom: 2px dashed var(--border); color: var(--primary); }
         .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1.5rem; }
 
+        /* THẺ SẢN PHẨM */
         .product-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 4px 12px rgba(61, 43, 31, 0.05); transition: transform 0.2s, box-shadow 0.2s; }
         .product-card:hover { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(61, 43, 31, 0.1); }
         .product-img { width: 100%; height: 180px; object-fit: cover; background-color: #EFE8DC; }
@@ -64,16 +51,22 @@
         .btn-add:hover:not(:disabled) { background-color: var(--accent); }
         .btn-add:disabled { background-color: #D3C9C1; color: #8C8077; cursor: not-allowed; }
 
+        /* GIỎ HÀNG & THÔNG TIN KHÁCH HÀNG */
         .cart-box { background: var(--card-bg); border: 2px solid var(--border); border-radius: 12px; padding: 1.5rem; height: fit-content; position: sticky; top: 1rem; box-shadow: 0 4px 15px rgba(0,0,0,0.04); }
         .cart-header { font-family: 'Merriweather', serif; font-size: 1.3rem; color: var(--primary); margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--border); }
-        .cart-items { max-height: 320px; overflow-y: auto; margin-bottom: 1rem; }
+        .cart-items { max-height: 280px; overflow-y: auto; margin-bottom: 1rem; }
         .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0; border-bottom: 1px dashed #EFE7DA; }
         .cart-item-info h4 { font-size: 0.95rem; color: var(--primary); }
         .cart-item-info span { font-size: 0.85rem; color: var(--text-muted); }
         .cart-item-qty { display: flex; align-items: center; gap: 6px; }
         .btn-qty { width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--border); background: #FAF5ED; cursor: pointer; font-weight: bold; }
-        .cart-total { border-top: 2px solid var(--border); padding-top: 1rem; display: flex; justify-content: space-between; font-size: 1.2rem; font-weight: 700; color: var(--accent); margin-bottom: 1.2rem; }
         
+        .customer-info-box { background: #FAF5ED; padding: 15px; border-radius: 8px; margin-bottom: 1rem; border: 1px dashed var(--accent); }
+        .customer-info-box label { display: block; font-size: 0.85rem; font-weight: bold; color: var(--primary); margin-top: 5px; margin-bottom: 4px; }
+        .customer-info-box input, .customer-info-box select { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 6px; border: 1px solid var(--border); font-family: inherit; font-size: 0.95rem; }
+        .customer-info-box input:focus { outline: 2px solid var(--accent); border-color: transparent;}
+        
+        .cart-total { border-top: 2px solid var(--border); padding-top: 1rem; display: flex; justify-content: space-between; font-size: 1.2rem; font-weight: 700; color: var(--accent); margin-bottom: 1.2rem; }
         .btn-checkout { width: 100%; padding: 14px; background-color: var(--accent); color: white; border: none; border-radius: 8px; font-size: 1.05rem; font-weight: 700; cursor: pointer; box-shadow: 0 4px 10px rgba(200, 90, 50, 0.3); transition: background 0.2s; }
         .btn-checkout:hover:not(:disabled) { background-color: var(--accent-hover); }
         .btn-checkout:disabled { background-color: #D3C9C1; box-shadow: none; cursor: not-allowed; }
@@ -86,14 +79,19 @@
         <img src="logo.jpg" alt="Mê Đá Logo" class="logo" onerror="this.src='https://via.placeholder.com/90'">
         <h1>MÊ ĐÁ</h1>
         <p>Chúng tôi không bán nước, chúng tôi bán câu chuyện</p>
-        <a href="admin.html" class="admin-link">⚙️ Admin</a>
+        
+        <!-- NÚT CHUYỂN TRANG -->
+        <div class="top-links">
+            <a href="donhang.html" class="nav-link" style="background-color: var(--green); border-color: var(--green);">👨‍🍳 Staff</a>
+            <a href="admin.html" class="nav-link">⚙️ Admin</a>
+        </div>
     </header>
 
-    <!-- BANNER SỰ KIỆN (Hiển thị động từ Admin) -->
+    <!-- BANNER SỰ KIỆN -->
     <div id="dynamicEventBanner">
         <div class="event-content">
-            <h3><span id="evTitleRender">Tuần Lễ Khai Trương</span> <span class="event-badge">HOT</span></h3>
-            <p id="evDescRender">Chào mừng bạn đến với Mê Đá!</p>
+            <h3><span id="evTitleRender">Sự Kiện</span> <span class="event-badge">HOT</span></h3>
+            <p id="evDescRender">Nội dung</p>
         </div>
         <div><span style="font-size: 2rem;">🎁☕</span></div>
     </div>
@@ -102,23 +100,31 @@
         <!-- Danh sách đồ uống -->
         <div>
             <h2 class="menu-title">☕ Thực Đơn Đồ Uống</h2>
-            <div id="productsGrid" class="products-grid">
-                <!-- JS render sản phẩm -->
-            </div>
+            <div id="productsGrid" class="products-grid"></div>
         </div>
 
         <!-- Giỏ hàng -->
         <div>
             <div class="cart-box">
                 <h3 class="cart-header">🛒 Giỏ Hàng</h3>
-                <div id="cartItems" class="cart-items">
-                    <!-- JS render giỏ hàng -->
+                <div id="cartItems" class="cart-items"></div>
+                
+                <div class="customer-info-box" id="customerInfoBox" style="display: none;">
+                    <label for="custName">Tên của bạn:</label>
+                    <input type="text" id="custName" placeholder="Nhập tên của bạn" required>
+                    
+                    <label for="orderType">Hình thức sử dụng:</label>
+                    <select id="orderType">
+                        <option value="Tại chỗ">Dùng tại chỗ</option>
+                        <option value="Mang về">Take away</option>
+                    </select>
                 </div>
+
                 <div class="cart-total">
                     <span>Tổng tiền:</span>
                     <span id="cartTotal">0 VNĐ</span>
                 </div>
-                <!-- Nút Thanh toán -->
+                
                 <button id="btnCheckout" class="btn-checkout" onclick="proceedToCheckout()" disabled>
                     Thanh Toán Qua QR
                 </button>
@@ -127,57 +133,16 @@
     </div>
 
     <script>
-        // --- NẠP CẤU HÌNH BANNER TỪ ADMIN ---
         function loadEventBanner() {
             const config = JSON.parse(localStorage.getItem('meda_event_config'));
             const bannerEl = document.getElementById('dynamicEventBanner');
-            
             if (config && config.isActive) {
                 document.getElementById('evTitleRender').textContent = config.title || 'Sự Kiện';
                 document.getElementById('evDescRender').textContent = config.desc || '';
                 bannerEl.style.backgroundColor = config.bgColor || '#FFEBE6';
                 bannerEl.style.display = 'flex';
-            } else {
-                bannerEl.style.display = 'none';
-            }
+            } else { bannerEl.style.display = 'none'; }
         }
-
-        const defaultInventory = [
-            { id: 'ing1', name: 'Hạt Cà Phê Mê Đá', quantity: 2000, unit: 'g' },
-            { id: 'ing2', name: 'Sữa Đặc Ong Thọ', quantity: 1500, unit: 'ml' },
-            { id: 'ing3', name: 'Sữa Tươi Không Đường', quantity: 3000, unit: 'ml' },
-            { id: 'ing4', name: 'Trà Cốt Lọc', quantity: 1000, unit: 'ml' }
-        ];
-
-        const defaultProducts = [
-            {
-                id: 'p1', name: 'Cà Phê Đen Đá', price: 25000,
-                description: 'Đậm đà, chuẩn vị phin Việt Nam truyền thống. Giúp bạn tỉnh táo cả ngày dài.',
-                image: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=500&q=80',
-                recipe: [{ ingId: 'ing1', amount: 25 }]
-            },
-            {
-                id: 'p2', name: 'Cà Phê Sữa Đá', price: 29000,
-                description: 'Sự kết hợp hoàn hảo giữa vị đắng của cà phê và vị ngọt béo của sữa đặc.',
-                image: 'https://images.unsplash.com/photo-1541167760496-1628856ab772?auto=format&fit=crop&w=500&q=80',
-                recipe: [{ ingId: 'ing1', amount: 25 }, { ingId: 'ing2', amount: 30 }]
-            },
-            {
-                id: 'p3', name: 'Bạc Xỉu Mê Đá', price: 32000,
-                description: 'Nhiều sữa, ít cà phê. Ngọt ngào, béo ngậy và cực kỳ êm ái cho những ngày nhẹ nhàng.',
-                image: 'https://images.unsplash.com/photo-1572442388796-11668a67e53d?auto=format&fit=crop&w=500&q=80',
-                recipe: [{ ingId: 'ing1', amount: 15 }, { ingId: 'ing2', amount: 40 }, { ingId: 'ing3', amount: 80 }]
-            },
-            {
-                id: 'p4', name: 'Trà Sữa Cổ Điển', price: 35000,
-                description: 'Trà đen hảo hạng pha cùng sữa tươi thanh mát. Một lựa chọn an toàn nhưng không kém phần hấp dẫn.',
-                image: 'https://images.unsplash.com/photo-1558857563-b371033873b8?auto=format&fit=crop&w=500&q=80',
-                recipe: [{ ingId: 'ing4', amount: 120 }, { ingId: 'ing2', amount: 30 }]
-            }
-        ];
-
-        if (!localStorage.getItem('meda_inventory')) localStorage.setItem('meda_inventory', JSON.stringify(defaultInventory));
-        if (!localStorage.getItem('meda_products')) localStorage.setItem('meda_products', JSON.stringify(defaultProducts));
 
         let cart = [];
 
@@ -219,7 +184,7 @@
                         <div class="product-desc">"${descText}"</div>
                         <div class="product-price">${p.price.toLocaleString('vi-VN')} VNĐ</div>
                         <div class="stock-tag ${isOut ? 'stock-out' : 'stock-available'}">
-                            ${isOut ? '❌ Hết hàng' : `✔ Còn làm được: ${availableCups} ly`}
+                            ${isOut ? '❌ Hết nguyên liệu' : `✔ Có thể pha: ${availableCups} ly`}
                         </div>
                         <button class="btn-add" ${isOut ? 'disabled' : ''} onclick="addToCart('${p.id}')">
                             ${isOut ? 'Tạm Hết Món' : 'Thêm Vào Giỏ'}
@@ -252,10 +217,14 @@
             const container = document.getElementById('cartItems');
             const totalEl = document.getElementById('cartTotal');
             const btnCheckout = document.getElementById('btnCheckout');
+            const infoBox = document.getElementById('customerInfoBox');
 
             if (cart.length === 0) {
                 container.innerHTML = '<div class="empty-cart-msg">Giỏ hàng đang trống</div>';
-                totalEl.textContent = '0 VNĐ'; btnCheckout.disabled = true; return;
+                totalEl.textContent = '0 VNĐ'; 
+                btnCheckout.disabled = true; 
+                infoBox.style.display = 'none'; 
+                return;
             }
 
             container.innerHTML = '';
@@ -264,42 +233,44 @@
             cart.forEach(item => {
                 const itemTotal = item.price * item.quantity;
                 total += itemTotal;
-
-                const itemEl = document.createElement('div');
-                itemEl.className = 'cart-item';
-                itemEl.innerHTML = `
-                    <div class="cart-item-info">
-                        <h4>${item.name}</h4>
-                        <span>${item.price.toLocaleString('vi-VN')} VNĐ x ${item.quantity}</span>
-                    </div>
-                    <div class="cart-item-qty">
-                        <button class="btn-qty" onclick="changeQuantity('${item.id}', -1)">-</button>
-                        <span>${item.quantity}</span>
-                        <button class="btn-qty" onclick="changeQuantity('${item.id}', 1)">+</button>
+                container.innerHTML += `
+                    <div class="cart-item">
+                        <div class="cart-item-info">
+                            <h4>${item.name}</h4><span>${item.price.toLocaleString('vi-VN')} VNĐ x ${item.quantity}</span>
+                        </div>
+                        <div class="cart-item-qty">
+                            <button class="btn-qty" onclick="changeQuantity('${item.id}', -1)">-</button>
+                            <span>${item.quantity}</span>
+                            <button class="btn-qty" onclick="changeQuantity('${item.id}', 1)">+</button>
+                        </div>
                     </div>
                 `;
-                container.appendChild(itemEl);
             });
 
             totalEl.textContent = total.toLocaleString('vi-VN') + ' VNĐ';
             btnCheckout.disabled = false;
+            infoBox.style.display = 'block';
         }
 
-        // --- CỘNG DỒN DOANH THU KHI THANH TOÁN ---
         function proceedToCheckout() {
             if (cart.length === 0) return;
             
-            // Tính tổng tiền đơn hàng hiện tại
-            const orderTotal = cart.reduce((sum, i) => sum + i.price * i.quantity, 0);
+            const custNameInput = document.getElementById('custName');
+            const custName = custNameInput.value.trim();
+            const orderType = document.getElementById('orderType').value;
 
-            // Bổ sung vào Tổng Doanh Thu để trang Admin nhận diện
-            const currentRevenue = parseFloat(localStorage.getItem('meda_total_revenue')) || 0;
-            localStorage.setItem('meda_total_revenue', currentRevenue + orderTotal);
+            if (!custName) {
+                alert("Vui lòng nhập tên của bạn để quán dễ dàng gọi khi nước pha xong nhé!");
+                custNameInput.focus();
+                return;
+            }
 
             const pendingOrder = {
                 orderId: 'MD' + Math.floor(100000 + Math.random() * 900000),
+                customerName: custName,
+                orderType: orderType,
                 items: cart,
-                total: orderTotal,
+                total: cart.reduce((sum, i) => sum + i.price * i.quantity, 0),
                 createdAt: new Date().toLocaleString('vi-VN')
             };
             
@@ -308,11 +279,8 @@
         }
 
         window.addEventListener('pageshow', () => {
-            loadEventBanner();
-            renderMenu();
-            updateCartUI();
+            loadEventBanner(); renderMenu(); updateCartUI();
         });
-        
     </script>
 </body>
 </html>

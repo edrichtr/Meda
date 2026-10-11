@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thanh Toán Đơn Hàng - Mê Đá Coffee</title>
+    <title>Thanh Toán Đơn Hàng - Mê Đá</title>
     <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -103,7 +103,7 @@
 <body>
 
     <div class="checkout-card">
-        <h2>MÊ ĐÁ COFFEE</h2>
+        <h2>MÊ ĐÁ</h2>
         <div class="order-id" id="orderIdText">Mã đơn hàng: Loading...</div>
 
         <p style="margin-bottom: 1rem; font-weight: 600;">Mở ứng dụng Ngân hàng / Quét mã VietQR để thanh toán</p>
@@ -113,6 +113,18 @@
         </div>
 
         <div class="payment-info">
+            <!-- Thêm thông tin khách hàng -->
+            <div class="info-row">
+                <span>Khách hàng:</span>
+                <strong id="custNameDisplay" style="color: var(--primary);"></strong>
+            </div>
+            <div class="info-row">
+                <span>Hình thức:</span>
+                <strong id="orderTypeDisplay"></strong>
+            </div>
+            <hr style="border: 0; border-top: 1px dashed var(--border); margin: 8px 0;">
+            
+            <!-- Thông tin thanh toán -->
             <div class="info-row">
                 <span>Ngân hàng:</span>
                 <strong id="bankName">Loading...</strong>
@@ -131,8 +143,8 @@
             </div>
         </div>
 
-        <button class="btn-confirm" onclick="confirmPayment()">✅ Tôi Đã Chuyển Khoản Thành Công</button>
-        <button class="btn-cancel" onclick="cancelOrder()">Quay lại chỉnh sửa đơn hàng</button>
+        <button class="btn-confirm" onclick="confirmPayment()">Kiểm tra thanh toán</button>
+        <button class="btn-cancel" onclick="cancelOrder()">Chỉnh sửa đơn hàng</button>
     </div>
 
     <script>
@@ -155,6 +167,11 @@
         } else {
             // Đổ dữ liệu text ra giao diện
             document.getElementById('orderIdText').textContent = `Mã đơn hàng: #${pendingOrder.orderId}`;
+            
+            // Đổ tên và hình thức (từ file index truyền sang)
+            document.getElementById('custNameDisplay').textContent = pendingOrder.customerName || 'Khách hàng';
+            document.getElementById('orderTypeDisplay').textContent = pendingOrder.orderType || 'Tại chỗ';
+
             document.getElementById('payAmount').textContent = pendingOrder.total.toLocaleString('vi-VN') + ' VNĐ';
             document.getElementById('bankName').textContent = bankConfig.bankId;
             document.getElementById('bankAcc').textContent = bankConfig.accountNo;
@@ -162,17 +179,26 @@
 
             // KIỂM TRA QUYẾT ĐỊNH HIỂN THỊ MÃ QR NÀO
             if (customQR) {
-                // 1. Nếu Admin có tải ảnh QR tĩnh lên -> Hiển thị ảnh đó
+                // Nếu Admin có tải ảnh QR tĩnh lên -> Hiển thị ảnh đó
                 document.getElementById('qrImage').src = customQR;
             } else {
-                // 2. Nếu không có ảnh -> Tự động gọi API tạo mã VietQR theo số tiền và mã đơn hàng
+                // Nếu không có ảnh -> Tự động gọi API tạo mã VietQR theo số tiền và mã đơn hàng
                 const qrUrl = `https://img.vietqr.io/image/${bankConfig.bankId}-${bankConfig.accountNo}-compact2.png?amount=${pendingOrder.total}&addInfo=${pendingOrder.orderId}&accountName=${encodeURIComponent(bankConfig.accountName)}`;
                 document.getElementById('qrImage').src = qrUrl;
             }
         }
 
         function confirmPayment() {
-            // 1. Trừ kho nguyên liệu
+            // 1. Cấp Số Thứ Tự (1-99)
+            let lastQueue = parseInt(localStorage.getItem('meda_last_queue')) || 0;
+            lastQueue = lastQueue >= 99 ? 1 : lastQueue + 1;
+            localStorage.setItem('meda_last_queue', lastQueue);
+            
+            // Cập nhật trạng thái đơn hàng để Quầy pha chế nhận
+            pendingOrder.queueNumber = lastQueue;
+            pendingOrder.status = 'Chờ pha chế';
+
+            // 2. Trừ kho nguyên liệu
             const inventory = JSON.parse(localStorage.getItem('meda_inventory')) || [];
             
             pendingOrder.items.forEach(cartItem => {
@@ -187,22 +213,20 @@
             });
             localStorage.setItem('meda_inventory', JSON.stringify(inventory));
 
-            // 2. Lưu vào lịch sử đơn hàng
+            // 3. Lưu vào lịch sử đơn hàng (hiển thị trên trang donhang.html và baocao.html)
             const orders = JSON.parse(localStorage.getItem('meda_orders')) || [];
-            orders.unshift({
-                ...pendingOrder,
-                status: 'Chờ xác nhận / Đã thanh toán'
-            });
+            orders.unshift(pendingOrder);
             localStorage.setItem('meda_orders', JSON.stringify(orders));
 
-            // 3. Tự động tính vào Tổng Doanh Thu báo cáo trong Admin
+            // 4. Tự động tính vào Tổng Doanh Thu báo cáo trong Admin
             const currentRevenue = parseFloat(localStorage.getItem('meda_total_revenue')) || 0;
             localStorage.setItem('meda_total_revenue', currentRevenue + pendingOrder.total);
 
-            // 4. Xóa đơn hàng chờ
+            // 5. Xóa đơn hàng chờ
             localStorage.removeItem('meda_pending_order');
 
-            alert("Cảm ơn quý khách! Đơn hàng đã hoàn tất và được chuyển đến quầy pha chế.");
+            // Hiển thị thông báo cấp số cho khách
+            alert(`Thanh toán thành công!\n\nTên: ${pendingOrder.customerName || 'Khách hàng'}\nSỐ THỨ TỰ CỦA BẠN LÀ: #${lastQueue}\n\nVui lòng chờ quán gọi theo số thứ tự nhé!`);
             window.location.href = "index.html";
         }
 
