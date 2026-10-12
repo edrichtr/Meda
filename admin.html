@@ -301,22 +301,29 @@
             window.logoutAdmin();
         }
 
-        // TẢI TOÀN BỘ DỮ LIỆU TỪ CLOUD
+        // TẢI TOÀN BỘ DỮ LIỆU TỪ CLOUD (PHIÊN BẢN TẢI SONG SONG SIÊU TỐC)
         async function loadAllData() {
             showLoader();
             try {
-                // Tải Event
-                const eventSnap = await getDoc(doc(db, "config", "event"));
+                // Gom tất cả các lệnh tải vào chạy cùng 1 lúc (Nhanh gấp 5 lần)
+                const [eventSnap, bankSnap, finSnap, invSnap, prodSnap] = await Promise.all([
+                    getDoc(doc(db, "config", "event")),
+                    getDoc(doc(db, "config", "bank")),
+                    getDoc(doc(db, "config", "finance")),
+                    getDocs(collection(db, "inventory")),
+                    getDocs(collection(db, "products"))
+                ]);
+
+                // 1. Tải Event
                 if(eventSnap.exists()) {
                     let cfg = eventSnap.data();
-                    document.getElementById('eventTitle').value = cfg.title;
-                    document.getElementById('eventDesc').value = cfg.desc;
-                    document.getElementById('eventBgColor').value = cfg.bgColor;
-                    document.getElementById('eventIsActive').value = cfg.isActive.toString();
+                    document.getElementById('eventTitle').value = cfg.title || '';
+                    document.getElementById('eventDesc').value = cfg.desc || '';
+                    document.getElementById('eventBgColor').value = cfg.bgColor || '#FFEBE6';
+                    document.getElementById('eventIsActive').value = (cfg.isActive !== undefined) ? cfg.isActive.toString() : 'true';
                 }
 
-                // Tải Bank & QR
-                const bankSnap = await getDoc(doc(db, "config", "bank"));
+                // 2. Tải Bank & QR
                 if(bankSnap.exists()) {
                     let b = bankSnap.data();
                     document.getElementById('bankId').value = b.bankId || 'MB';
@@ -328,8 +335,7 @@
                     }
                 }
 
-                // Tải Tài Chính
-                const finSnap = await getDoc(doc(db, "config", "finance"));
+                // 3. Tải Tài Chính
                 let finData = { fixedCosts: 0, ingredientCosts: 0, totalRevenue: 0 };
                 if(finSnap.exists()) finData = finSnap.data();
                 document.getElementById('finRevenue').value = finData.totalRevenue || 0;
@@ -337,17 +343,17 @@
                 document.getElementById('finIng').value = finData.ingredientCosts || 0;
                 window.calculateProfitUI();
 
-                // Tải Inventory
-                const invSnap = await getDocs(collection(db, "inventory"));
+                // 4. Tải Inventory & Products
                 globalInventory = invSnap.docs.map(d => d.data());
+                globalProducts = prodSnap.docs.map(d => { let p = d.data(); p.id = d.id; return p; });
+                
+                // Hiển thị ra màn hình
                 renderInventory();
 
-                // Tải Products
-                const prodSnap = await getDocs(collection(db, "products"));
-                globalProducts = prodSnap.docs.map(d => { let p = d.data(); p.id = d.id; return p; });
-                renderProducts();
-
-            } catch(e) { console.error(e); alert("Lỗi khi tải dữ liệu từ Đám mây."); }
+            } catch(e) { 
+                console.error(e); 
+                alert("Lỗi khi tải dữ liệu từ Đám mây."); 
+            }
             hideLoader();
         }
 

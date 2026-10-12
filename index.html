@@ -150,11 +150,17 @@
             { id: 'p3', name: 'Bạc Xỉu Mê Đá', price: 32000, description: 'Nhiều sữa, ít cà phê. Ngọt ngào, béo ngậy.', image: 'https://images.unsplash.com/photo-1572442388796-11668a67e53d?auto=format&fit=crop&w=500&q=80', recipe: [{ ingId: 'ing1', amount: 15 }, { ingId: 'ing2', amount: 40 }, { ingId: 'ing3', amount: 80 }] }
         ];
 
-        // TẢI DỮ LIỆU TỪ ĐÁM MÂY
+        // TẢI DỮ LIỆU TỪ ĐÁM MÂY (PHIÊN BẢN TẢI SONG SONG SIÊU TỐC)
         async function loadDataFromCloud() {
             try {
-                // 1. Tải sự kiện
-                const eventSnap = await getDoc(doc(db, "config", "event"));
+                // Tải cùng lúc: Sự kiện, Kho nguyên liệu, và Menu đồ uống
+                const [eventSnap, invSnap, prodSnap] = await Promise.all([
+                    getDoc(doc(db, "config", "event")),
+                    getDocs(collection(db, "inventory")),
+                    getDocs(collection(db, "products"))
+                ]);
+
+                // 1. Xử lý sự kiện
                 if (eventSnap.exists()) {
                     const config = eventSnap.data();
                     const bannerEl = document.getElementById('dynamicEventBanner');
@@ -166,8 +172,7 @@
                     }
                 }
 
-                // 2. Tải Kho nguyên liệu
-                const invSnap = await getDocs(collection(db, "inventory"));
+                // 2. Xử lý Kho nguyên liệu (Nếu trống thì nạp mặc định)
                 if (invSnap.empty) {
                     for (let item of defaultInventory) await setDoc(doc(db, "inventory", item.id), item);
                     globalInventory = defaultInventory;
@@ -175,8 +180,7 @@
                     globalInventory = invSnap.docs.map(d => d.data());
                 }
 
-                // 3. Tải Menu sản phẩm
-                const prodSnap = await getDocs(collection(db, "products"));
+                // 3. Xử lý Menu sản phẩm (Nếu trống thì nạp mặc định)
                 if (prodSnap.empty) {
                     for (let p of defaultProducts) await setDoc(doc(db, "products", p.id), p);
                     globalProducts = defaultProducts;
@@ -185,6 +189,8 @@
                         let data = d.data(); data.id = d.id; return data;
                     });
                 }
+                
+                // Hiển thị ra màn hình
                 renderMenu();
                 updateCartUI();
             } catch (error) {
