@@ -6,93 +6,52 @@
     <title>Quản Trị Hệ Thống - Mê Đá</title>
     <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --bg-color: #FBF6EE;
-            --card-bg: #FFFDF9;
-            --primary: #3D2B1F;
-            --accent: #C85A32;
-            --border: #E8DFC8;
-            --red: #C62828;
-            --amber: #EF6C00;
-            --blue: #1565C0;
-            --green: #2E7D32;
-        }
-
+        :root { --bg-color: #FBF6EE; --card-bg: #FFFDF9; --primary: #3D2B1F; --accent: #C85A32; --border: #E8DFC8; --red: #C62828; --amber: #EF6C00; --blue: #1565C0; --green: #2E7D32; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: var(--bg-color);
-            color: #2B1E16;
-            padding-bottom: 3rem;
-        }
-
-        #loginOverlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(61, 43, 31, 0.85); display: flex; justify-content: center; align-items: center; z-index: 1000;
-        }
-
-        .login-box {
-            background: var(--card-bg); padding: 2.5rem; border-radius: 12px; width: 360px; text-align: center;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.2); border: 2px solid var(--border);
-        }
-
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg-color); color: #2B1E16; padding-bottom: 3rem; }
+        #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(61, 43, 31, 0.85); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+        .login-box { background: var(--card-bg); padding: 2.5rem; border-radius: 12px; width: 360px; text-align: center; box-shadow: 0 8px 25px rgba(0,0,0,0.2); border: 2px solid var(--border); }
         .login-box h2 { font-family: 'Merriweather', serif; color: var(--primary); margin-bottom: 1.5rem; }
         .login-box input { width: 100%; padding: 10px; margin-bottom: 1rem; border: 1px solid var(--border); border-radius: 6px; }
         .login-box button { width: 100%; padding: 12px; background: var(--accent); color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
         .forgot-pass-link { display: block; text-align: right; font-size: 0.85rem; color: var(--accent); margin-top: -10px; margin-bottom: 15px; font-weight: 600; text-decoration: none; }
-        .forgot-pass-link:hover { text-decoration: underline; }
-
-        header {
-            background-color: var(--primary); color: #FAF4EB; padding: 1.2rem 2rem;
-            display: flex; justify-content: space-between; align-items: center;
-        }
+        header { background-color: var(--primary); color: #FAF4EB; padding: 1.2rem 2rem; display: flex; justify-content: space-between; align-items: center; }
         header h1 { font-family: 'Merriweather', serif; font-size: 1.5rem; }
         .btn-logout { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-weight: 600;}
-        .btn-logout:hover { background: rgba(255,255,255,0.25); }
-
         .main-content { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
-        
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
         @media (max-width: 900px) { .grid-2 { grid-template-columns: 1fr; } }
-
         .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
         .card h3 { font-family: 'Merriweather', serif; color: var(--primary); margin-bottom: 1rem; border-bottom: 2px solid var(--border); padding-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;}
-        
         table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; }
         th, td { text-align: left; padding: 10px; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
         th { background-color: #FAF5ED; color: var(--primary); }
-
         .input-group { margin-bottom: 1rem; }
         .input-group label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; text-align: left;}
         .input-group input, .input-group select, .input-group textarea { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; font-family: inherit; }
         .input-group textarea { resize: vertical; min-height: 80px; }
-        
         .form-row { display: flex; gap: 1rem; align-items: flex-end; margin-bottom: 1rem; }
         .form-row > .input-group { flex: 1; margin-bottom: 0; }
-
         .btn { padding: 6px 12px; border: none; border-radius: 4px; font-weight: 600; cursor: pointer; color: white; font-size: 0.85rem; text-decoration: none; display: inline-block; text-align: center;}
         .btn-primary { background: var(--primary); }
         .btn-accent { background: var(--accent); }
         .btn-danger { background: var(--red); }
         .btn-info { background: var(--blue); }
-        
         .badge { padding: 3px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; }
         .badge-danger { background: #FFEBEE; color: var(--red); }
         .badge-warning { background: #FFF3E0; color: var(--amber); }
         .badge-success { background: #E8F5E9; color: var(--green); }
-
         .preview-img { width: 60px; height: 60px; object-fit: cover; border-radius: 6px; border: 1px solid #ccc;}
-        
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 999; }
         .modal-content { background: #fff; padding: 2rem; border-radius: 8px; width: 500px; max-width: 90%; max-height: 90vh; overflow-y: auto;}
         .modal-header { font-family: 'Merriweather', serif; font-size: 1.2rem; color: var(--primary); margin-bottom: 1rem; text-align: left;}
-
-        /* Color Picker cho Banner */
         .color-picker-wrapper { display: flex; align-items: center; gap: 10px; }
         .color-picker-wrapper input[type="color"] { width: 40px; height: 40px; padding: 0; border: none; border-radius: 4px; cursor: pointer; }
+        .loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 9999; justify-content: center; align-items: center; font-weight: bold; color: var(--accent); font-size: 1.2rem;}
     </style>
 </head>
 <body>
+    <div id="globalLoader" class="loading-overlay">⏳ Đang đồng bộ dữ liệu với Đám mây...</div>
 
     <!-- Đăng nhập -->
     <div id="loginOverlay">
@@ -100,17 +59,17 @@
             <h2>Đăng Nhập Admin</h2>
             <input type="text" id="adminUser" placeholder="Tên đăng nhập">
             <input type="password" id="adminPass" placeholder="Mật khẩu">
-            <a href="#" class="forgot-pass-link" onclick="openForgotModal()">Quên mật khẩu?</a>
-            <button onclick="loginAdmin()">Đăng Nhập Quản Trị</button>
+            <a href="#" class="forgot-pass-link" onclick="window.openForgotModal()">Quên mật khẩu?</a>
+            <button onclick="window.loginAdmin()">Đăng Nhập Quản Trị</button>
         </div>
     </div>
 
     <header>
-        <h1>⚙️ Mê Đá - Quản Trị</h1>
+        <h1>⚙️ Mê Đá - Quản Trị <span style="font-size: 0.8rem; background: var(--green); padding: 2px 6px; border-radius: 8px;">CLOUD</span></h1>
         <div style="display: flex; gap: 10px;">
             <button class="btn-logout" onclick="window.location.href='index.html'" style="background: var(--green); border-color: var(--green);">🛒 Trang Đặt Hàng</button>
-            <button class="btn-logout" onclick="openChangePassModal()" style="background: var(--amber); border-color: var(--amber);">Đổi Mật Khẩu</button>
-            <button class="btn-logout" onclick="logoutAdmin()">Đăng Xuất</button>
+            <button class="btn-logout" onclick="window.openChangePassModal()" style="background: var(--amber); border-color: var(--amber);">Đổi Mật Khẩu</button>
+            <button class="btn-logout" onclick="window.logoutAdmin()">Đăng Xuất</button>
         </div>
     </header>
 
@@ -144,7 +103,7 @@
                         <option value="false">Tắt (Ẩn)</option>
                     </select>
                 </div>
-                <button class="btn btn-accent" style="height: 35px; margin-bottom: 2px;" onclick="saveEventConfig()">Lưu Cấu Hình Sự Kiện</button>
+                <button class="btn btn-accent" style="height: 35px; margin-bottom: 2px;" onclick="window.saveEventConfig()">Lưu Cấu Hình Sự Kiện</button>
             </div>
         </div>
 
@@ -152,7 +111,6 @@
         <div class="card">
             <h3>
                 📊 Báo Cáo Tài Chính & Tính Tiền Lãi
-                <!-- NÚT XEM BÁO CÁO CHI TIẾT -->
                 <a href="baocao.html" class="btn btn-info" style="font-size: 0.9rem; padding: 6px 16px;">📈 Xem Báo Cáo Chi Tiết</a>
             </h3>
             <div class="grid-2">
@@ -164,15 +122,15 @@
                     <div class="input-group">
                         <label>Tổng Chi Phí Nhập Nguyên Liệu (VNĐ)</label>
                         <div style="display: flex; gap: 8px;">
-                            <input type="number" id="finIng" placeholder="0" oninput="calculateProfitUI()">
-                            <button class="btn btn-info" onclick="addManualCost('finIng')" style="white-space: nowrap;">+ Cộng dồn</button>
+                            <input type="number" id="finIng" placeholder="0" oninput="window.calculateProfitUI()">
+                            <button class="btn btn-info" onclick="window.addManualCost('finIng')" style="white-space: nowrap;">+ Cộng dồn</button>
                         </div>
                     </div>
                     <div class="input-group">
                         <label>Các Chi Phí Khác (Điện, nước, nhân công...) (VNĐ)</label>
                         <div style="display: flex; gap: 8px;">
-                            <input type="number" id="finFixed" placeholder="0" oninput="calculateProfitUI()">
-                            <button class="btn btn-info" onclick="addManualCost('finFixed')" style="white-space: nowrap;">+ Cộng dồn</button>
+                            <input type="number" id="finFixed" placeholder="0" oninput="window.calculateProfitUI()">
+                            <button class="btn btn-info" onclick="window.addManualCost('finFixed')" style="white-space: nowrap;">+ Cộng dồn</button>
                         </div>
                     </div>
                 </div>
@@ -180,8 +138,8 @@
                     <h4 style="margin-bottom: 15px; color: var(--primary);">Tiền Lãi Ước Tính</h4>
                     <div id="finProfit" style="font-size: 2.2rem; font-weight: 700; color: var(--green);">0 VNĐ</div>
                     <div style="margin-top: 20px; display: flex; gap: 10px;">
-                        <button class="btn btn-accent" onclick="updateFinance()">💾 Lưu Chi Phí</button>
-                        <button class="btn" style="background:#e0e0e0; color:#333;" onclick="resetFinance()">🔄 Reset Tháng Mới</button>
+                        <button class="btn btn-accent" onclick="window.updateFinance()">💾 Lưu Chi Phí</button>
+                        <button class="btn" style="background:#e0e0e0; color:#333;" onclick="window.resetFinance()">🔄 Reset Tháng Mới</button>
                     </div>
                 </div>
             </div>
@@ -193,7 +151,6 @@
             <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Trang thanh toán sẽ tự động ưu tiên hiển thị <strong>Ảnh QR tùy chỉnh</strong>. Nếu không có ảnh, hệ thống sẽ hiển thị <strong>Mã VietQR tự động</strong> dựa trên Thông tin ngân hàng.</p>
             
             <div class="grid-2">
-                <!-- 1. Thông tin tự động -->
                 <div style="background: #faf5ed; padding: 1rem; border-radius: 8px; border: 1px dashed var(--border);">
                     <h4 style="color: var(--primary); margin-bottom: 10px; font-family: 'Merriweather', serif;">1. Thông tin Ngân hàng (Tạo VietQR)</h4>
                     <div class="input-group">
@@ -221,23 +178,22 @@
                         <input type="text" id="bankAccName" placeholder="VD: NGUYEN VAN A">
                     </div>
                     <div style="text-align: right;">
-                        <button class="btn btn-accent" onclick="saveBankConfig()">Lưu Thông Tin</button>
+                        <button class="btn btn-accent" onclick="window.saveBankConfig()">Lưu Thông Tin</button>
                     </div>
                 </div>
 
-                <!-- 2. Ảnh QR Tùy chỉnh -->
                 <div style="background: #faf5ed; padding: 1rem; border-radius: 8px; border: 1px dashed var(--border); display: flex; flex-direction: column;">
-                    <h4 style="color: var(--primary); margin-bottom: 10px; font-family: 'Merriweather', serif;">2. Ảnh QR Tùy Chỉnh (MoMo, ZaloPay...)</h4>
+                    <h4 style="color: var(--primary); margin-bottom: 10px; font-family: 'Merriweather', serif;">2. Ảnh QR Tùy Chỉnh</h4>
                     <div class="input-group">
                         <label>Tải lên mã QR của bạn</label>
-                        <input type="file" id="qrFile" accept="image/*" onchange="previewQR(event)">
+                        <input type="file" id="qrFile" accept="image/*" onchange="window.previewQR(event)">
                     </div>
                     <div style="flex-grow: 1; display: flex; justify-content: center; align-items: center; margin-bottom: 10px;">
                         <img id="qrPreviewCurrent" src="https://via.placeholder.com/150?text=Chua+Co+QR" style="max-height: 140px; border-radius: 8px; border: 1px dashed var(--border); background: #fff; padding: 5px; object-fit: contain;">
                     </div>
                     <div style="display: flex; justify-content: space-between;">
-                        <button class="btn btn-danger" onclick="deleteCustomQR()">Xóa Ảnh QR</button>
-                        <button class="btn btn-accent" onclick="saveQRCode()">Lưu Ảnh Mới</button>
+                        <button class="btn btn-danger" onclick="window.deleteCustomQR()">Xóa Ảnh QR</button>
+                        <button class="btn btn-accent" onclick="window.saveQRCode()">Lưu Ảnh Mới</button>
                     </div>
                 </div>
             </div>
@@ -247,15 +203,11 @@
             <!-- QUẢN LÝ NGUYÊN LIỆU -->
             <div class="card">
                 <h3>📦 Kho Nguyên Liệu 
-                    <button class="btn btn-primary" onclick="openIngredientModal()">+ Thêm</button>
+                    <button class="btn btn-primary" onclick="window.openIngredientModal()">+ Thêm</button>
                 </h3>
                 <table style="font-size: 0.85rem;">
                     <thead>
-                        <tr>
-                            <th>Tên & Tồn Kho</th>
-                            <th>Trạng Thái</th>
-                            <th style="width: 150px;">Thao tác</th>
-                        </tr>
+                        <tr><th>Tên & Tồn Kho</th><th>Trạng Thái</th><th style="width: 150px;">Thao tác</th></tr>
                     </thead>
                     <tbody id="inventoryTable"></tbody>
                 </table>
@@ -264,15 +216,11 @@
             <!-- QUẢN LÝ SẢN PHẨM -->
             <div class="card">
                 <h3>☕ Quản Lý Thực Đơn
-                    <button class="btn btn-primary" onclick="openProductModal()">+ Thêm Món</button>
+                    <button class="btn btn-primary" onclick="window.openProductModal()">+ Thêm Món</button>
                 </h3>
                 <table style="font-size: 0.85rem;">
                     <thead>
-                        <tr>
-                            <th>Tên Món & Giá</th>
-                            <th>Khả năng bán</th>
-                            <th style="width: 130px;">Thao tác</th>
-                        </tr>
+                        <tr><th>Tên Món & Giá</th><th>Khả năng bán</th><th style="width: 130px;">Thao tác</th></tr>
                     </thead>
                     <tbody id="productStockTable"></tbody>
                 </table>
@@ -281,298 +229,166 @@
 
     </div>
 
-    <!-- MODAL QUÊN MẬT KHẨU -->
-    <div id="modalForgot" class="modal" style="z-index: 1001;">
-        <div class="modal-content" style="width: 400px;">
-            <div class="modal-header">Khôi Phục Mật Khẩu</div>
-            <div class="input-group">
-                <label>Tên đăng nhập</label>
-                <input type="text" id="fgUser" placeholder="Nhập tên đăng nhập">
-            </div>
-            <div class="input-group">
-                <label>Mã khôi phục</label>
-                <input type="text" id="fgCode" placeholder="Nhập mã khôi phục">
-            </div>
-            <div class="input-group">
-                <label>Mật khẩu mới</label>
-                <input type="password" id="fgNewPass" placeholder="Nhập mật khẩu mới">
-            </div>
-            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 1.5rem;">
-                <button class="btn" style="background:#ccc; color:#000;" onclick="closeModals()">Hủy</button>
-                <button class="btn btn-accent" onclick="processResetPassword()">Cập nhật mật khẩu</button>
-            </div>
-        </div>
-    </div>
+    <!-- CÁC MODAL ẨN -->
+    <div id="modalForgot" class="modal" style="z-index: 1001;"><div class="modal-content" style="width: 400px;"><div class="modal-header">Khôi Phục Mật Khẩu</div><div class="input-group"><label>Tên đăng nhập</label><input type="text" id="fgUser" placeholder="Nhập tên đăng nhập"></div><div class="input-group"><label>Mã khôi phục</label><input type="text" id="fgCode" placeholder="Nhập mã khôi phục"></div><div class="input-group"><label>Mật khẩu mới</label><input type="password" id="fgNewPass" placeholder="Nhập mật khẩu mới"></div><div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 1.5rem;"><button class="btn" style="background:#ccc; color:#000;" onclick="window.closeModals()">Hủy</button><button class="btn btn-accent" onclick="window.processResetPassword()">Cập nhật</button></div></div></div>
+    <div id="modalChangePass" class="modal"><div class="modal-content" style="width: 400px;"><div class="modal-header">Đổi Mật Khẩu Admin</div><div class="input-group"><label>Mật khẩu hiện tại</label><input type="password" id="cpCurrentPass"></div><div class="input-group"><label>Mật khẩu mới</label><input type="password" id="cpNewPass"></div><div class="input-group"><label>Xác nhận mật khẩu mới</label><input type="password" id="cpConfirmPass"></div><div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 1.5rem;"><button class="btn" style="background:#ccc; color:#000;" onclick="window.closeModals()">Hủy</button><button class="btn btn-accent" onclick="window.saveNewPassword()">Lưu Mật Khẩu</button></div></div></div>
+    <div id="modalIngredient" class="modal"><div class="modal-content"><div class="modal-header" id="ingModalTitle">Thêm Nguyên Liệu Mới</div><input type="hidden" id="ingEditId"><div class="input-group"><label>Tên Nguyên Liệu</label><input type="text" id="ingName"></div><div class="form-row"><div class="input-group"><label>Số lượng</label><input type="number" id="ingQuantity"></div><div class="input-group"><label>Đơn vị (g, ml...)</label><input type="text" id="ingUnit"></div></div><div class="input-group" id="ingCostGroup"><label>Chi phí nhập ban đầu (VNĐ)</label><input type="number" id="ingCost"></div><div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 1rem;"><button class="btn" style="background:#ccc; color:#000;" onclick="window.closeModals()">Hủy</button><button class="btn btn-accent" onclick="window.saveIngredient()">Lưu Nguyên Liệu</button></div></div></div>
+    <div id="modalProduct" class="modal"><div class="modal-content"><div class="modal-header" id="prodModalTitle">Thêm Sản Phẩm Mới</div><input type="hidden" id="prodEditId"><div class="input-group"><label>Tên đồ uống</label><input type="text" id="pName"></div><div class="input-group"><label>Mô tả đồ uống</label><textarea id="pDesc"></textarea></div><div class="input-group"><label>Giá bán (VNĐ)</label><input type="number" id="pPrice"></div><div class="input-group"><label>Hình ảnh sản phẩm</label><input type="file" id="pFile" accept="image/*" onchange="window.previewImageProduct(event)"><input type="hidden" id="pImgBase64"><div style="margin-top: 8px;"><img id="imgPreview" class="preview-img" style="display:none;" src=""></div><div id="imgLoading" style="display:none; color: var(--accent); font-size: 0.85rem; font-weight: bold; margin-top: 5px;">⏳ Đang xử lý ảnh...</div></div><hr style="margin: 1.5rem 0; border: 0; border-top: 1px dashed var(--border);"><label style="font-size: 0.9rem; font-weight: 600; color:var(--primary);">Định lượng công thức:</label><div id="recipeInputs" style="margin-top: 10px; max-height: 150px; overflow-y: auto; background: #faf5ed; padding: 10px; border-radius: 6px;"></div><div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 1.5rem;"><button class="btn" style="background:#ccc; color:#000;" onclick="window.closeModals()">Hủy</button><button class="btn btn-accent" id="btnSaveProduct" onclick="window.saveProduct()">Lưu Sản Phẩm</button></div></div></div>
 
-    <!-- MODAL ĐỔI MẬT KHẨU -->
-    <div id="modalChangePass" class="modal">
-        <div class="modal-content" style="width: 400px;">
-            <div class="modal-header">Đổi Mật Khẩu Admin</div>
-            <div class="input-group">
-                <label>Mật khẩu hiện tại</label>
-                <input type="password" id="cpCurrentPass" placeholder="Nhập mật khẩu hiện tại">
-            </div>
-            <div class="input-group">
-                <label>Mật khẩu mới</label>
-                <input type="password" id="cpNewPass" placeholder="Nhập mật khẩu mới">
-            </div>
-            <div class="input-group">
-                <label>Xác nhận mật khẩu mới</label>
-                <input type="password" id="cpConfirmPass" placeholder="Nhập lại mật khẩu mới">
-            </div>
-            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 1.5rem;">
-                <button class="btn" style="background:#ccc; color:#000;" onclick="closeModals()">Hủy</button>
-                <button class="btn btn-accent" onclick="saveNewPassword()">Lưu Mật Khẩu</button>
-            </div>
-        </div>
-    </div>
+    <!-- TÍCH HỢP FIREBASE (Dạng Module chuẩn) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, doc, getDoc, setDoc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
-    <!-- MODAL THÊM/SỬA NGUYÊN LIỆU -->
-    <div id="modalIngredient" class="modal">
-        <div class="modal-content">
-            <div class="modal-header" id="ingModalTitle">Thêm Nguyên Liệu Mới</div>
-            <input type="hidden" id="ingEditId">
-            <div class="input-group">
-                <label>Tên Nguyên Liệu</label>
-                <input type="text" id="ingName">
-            </div>
-            <div class="form-row">
-                <div class="input-group">
-                    <label>Số lượng kho ban đầu</label>
-                    <input type="number" id="ingQuantity">
-                </div>
-                <div class="input-group">
-                    <label>Đơn vị (g, ml, quả...)</label>
-                    <input type="text" id="ingUnit">
-                </div>
-            </div>
-            
-            <div class="input-group" id="ingCostGroup">
-                <label>Chi phí nhập ban đầu (VNĐ) <br><span style="font-size: 0.75rem; color: #666; font-weight: normal;">*Sẽ tự động cộng dồn vào Báo cáo chi phí nguyên liệu</span></label>
-                <input type="number" id="ingCost" placeholder="Nhập số tiền đã chi...">
-            </div>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAtZN8CGdH0M-OTs9Z2gGCsiA2AWJ0WRXg",
+            authDomain: "meda-e0955.firebaseapp.com",
+            projectId: "meda-e0955",
+            storageBucket: "meda-e0955.firebasestorage.app",
+            messagingSenderId: "446317572827",
+            appId: "1:446317572827:web:bdad243a1e5ba1ceba12fe",
+            measurementId: "G-8FVX96XD07"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
 
-            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 1rem;">
-                <button class="btn" style="background:#ccc; color:#000;" onclick="closeModals()">Hủy</button>
-                <button class="btn btn-accent" onclick="saveIngredient()">Lưu Nguyên Liệu</button>
-            </div>
-        </div>
-    </div>
+        // Biến toàn cục
+        let globalProducts = [];
+        let globalInventory = [];
+        let tempQRBase64 = "";
 
-    <!-- MODAL THÊM/SỬA SẢN PHẨM -->
-    <div id="modalProduct" class="modal">
-        <div class="modal-content">
-            <div class="modal-header" id="prodModalTitle">Thêm Sản Phẩm Mới</div>
-            <input type="hidden" id="prodEditId">
-            
-            <div class="input-group">
-                <label>Tên đồ uống</label>
-                <input type="text" id="pName">
-            </div>
-            <div class="input-group">
-                <label>Mô tả đồ uống (Câu chuyện, hương vị...)</label>
-                <textarea id="pDesc" placeholder="Nhập mô tả ngắn gọn về đồ uống này..."></textarea>
-            </div>
-            <div class="input-group">
-                <label>Giá bán (VNĐ)</label>
-                <input type="number" id="pPrice">
-            </div>
-            
-            <div class="input-group">
-                <label>Hình ảnh sản phẩm (Upload file)</label>
-                <input type="file" id="pFile" accept="image/*" onchange="previewImageProduct(event)">
-                <input type="hidden" id="pImgBase64">
-                <div style="margin-top: 8px;">
-                    <img id="imgPreview" class="preview-img" style="display:none;" src="">
-                </div>
-                <div id="imgLoading" style="display:none; color: var(--accent); font-size: 0.85rem; font-weight: bold; margin-top: 5px;">⏳ Đang xử lý ảnh, vui lòng chờ...</div>
-            </div>
+        // UI Helpers
+        function showLoader() { document.getElementById('globalLoader').style.display = 'flex'; }
+        function hideLoader() { document.getElementById('globalLoader').style.display = 'none'; }
+        window.closeModals = function() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); }
 
-            <hr style="margin: 1.5rem 0; border: 0; border-top: 1px dashed var(--border);">
-            
-            <label style="font-size: 0.9rem; font-weight: 600; color:var(--primary);">Định lượng công thức (1 ly cần những gì?):</label>
-            <div id="recipeInputs" style="margin-top: 10px; max-height: 150px; overflow-y: auto; background: #faf5ed; padding: 10px; border-radius: 6px;">
-                <!-- JS Render Checkbox -->
-            </div>
-
-            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 1.5rem;">
-                <button class="btn" style="background:#ccc; color:#000;" onclick="closeModals()">Hủy</button>
-                <button class="btn btn-accent" id="btnSaveProduct" onclick="saveProduct()">Lưu Sản Phẩm</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // KIỂM TRA ĐĂNG NHẬP
+        // BẢO MẬT & ĐĂNG NHẬP
         if (sessionStorage.getItem('meda_admin_logged_in') === 'true') {
             document.getElementById('loginOverlay').style.display = 'none';
+            loadAllData();
         }
 
-        function loginAdmin() {
+        window.loginAdmin = function() {
             const currentPass = localStorage.getItem('meda_admin_pass') || '123456';
             if (document.getElementById('adminUser').value === 'admin' && document.getElementById('adminPass').value === currentPass) {
                 sessionStorage.setItem('meda_admin_logged_in', 'true');
                 document.getElementById('loginOverlay').style.display = 'none';
-            } else {
-                alert("Sai tài khoản hoặc mật khẩu!");
-            }
+                loadAllData();
+            } else { alert("Sai tài khoản hoặc mật khẩu!"); }
         }
 
-        function logoutAdmin() {
-            sessionStorage.removeItem('meda_admin_logged_in');
-            window.location.reload();
-        }
-
-        function openForgotModal() { document.getElementById('modalForgot').style.display = 'flex'; }
-        
-        function processResetPassword() {
+        window.logoutAdmin = function() { sessionStorage.removeItem('meda_admin_logged_in'); window.location.reload(); }
+        window.openForgotModal = function() { document.getElementById('modalForgot').style.display = 'flex'; }
+        window.processResetPassword = function() {
             const user = document.getElementById('fgUser').value;
             const code = document.getElementById('fgCode').value;
             const newPass = document.getElementById('fgNewPass').value;
             if (user === 'admin' && code === 'meda') {
-                if (newPass.length < 6) return alert("Mật khẩu mới phải có ít nhất 6 ký tự!");
+                if (newPass.length < 6) return alert("Mật khẩu phải có ít nhất 6 ký tự!");
                 localStorage.setItem('meda_admin_pass', newPass);
-                alert("Đổi mật khẩu thành công! Vui lòng đăng nhập lại.");
-                closeModals();
-                document.getElementById('fgUser').value = ''; document.getElementById('fgCode').value = ''; document.getElementById('fgNewPass').value = ''; document.getElementById('adminPass').value = '';
-            } else { alert("Tên đăng nhập hoặc Mã khôi phục không chính xác!"); }
+                alert("Đổi mật khẩu thành công!");
+                window.closeModals();
+            } else { alert("Sai thông tin!"); }
         }
-
-        function openChangePassModal() { document.getElementById('cpCurrentPass').value = ''; document.getElementById('cpNewPass').value = ''; document.getElementById('cpConfirmPass').value = ''; document.getElementById('modalChangePass').style.display = 'flex'; }
-
-        function saveNewPassword() {
+        window.openChangePassModal = function() { document.getElementById('modalChangePass').style.display = 'flex'; }
+        window.saveNewPassword = function() {
             const currentSavedPass = localStorage.getItem('meda_admin_pass') || '123456';
-            const inputCurrent = document.getElementById('cpCurrentPass').value;
-            const inputNew = document.getElementById('cpNewPass').value;
-            const inputConfirm = document.getElementById('cpConfirmPass').value;
-            if (inputCurrent !== currentSavedPass) return alert("Mật khẩu hiện tại không chính xác!");
-            if (inputNew.length < 6) return alert("Mật khẩu mới phải có ít nhất 6 ký tự!");
-            if (inputNew !== inputConfirm) return alert("Mật khẩu xác nhận không khớp nhau!");
-            localStorage.setItem('meda_admin_pass', inputNew);
-            alert("Đổi mật khẩu thành công! Vui lòng đăng nhập lại.");
-            closeModals(); logoutAdmin(); 
+            if (document.getElementById('cpCurrentPass').value !== currentSavedPass) return alert("Mật khẩu hiện tại sai!");
+            const newPass = document.getElementById('cpNewPass').value;
+            if (newPass.length < 6 || newPass !== document.getElementById('cpConfirmPass').value) return alert("Mật khẩu mới không hợp lệ hoặc không khớp!");
+            localStorage.setItem('meda_admin_pass', newPass);
+            alert("Đổi mật khẩu thành công!");
+            window.logoutAdmin();
         }
 
-        // --------- CẤU HÌNH BANNER SỰ KIỆN ---------
-        function getEventConfig() {
-            return JSON.parse(localStorage.getItem('meda_event_config')) || {
-                title: '🎉 Tuần Lễ Sinh Viên', desc: 'Mua 2 tặng 1 cho tất cả các loại Bạc Xỉu & Cà Phê Sữa!', bgColor: '#FFEBE6', isActive: true
-            };
+        // TẢI TOÀN BỘ DỮ LIỆU TỪ CLOUD
+        async function loadAllData() {
+            showLoader();
+            try {
+                // Tải Event
+                const eventSnap = await getDoc(doc(db, "config", "event"));
+                if(eventSnap.exists()) {
+                    let cfg = eventSnap.data();
+                    document.getElementById('eventTitle').value = cfg.title;
+                    document.getElementById('eventDesc').value = cfg.desc;
+                    document.getElementById('eventBgColor').value = cfg.bgColor;
+                    document.getElementById('eventIsActive').value = cfg.isActive.toString();
+                }
+
+                // Tải Bank & QR
+                const bankSnap = await getDoc(doc(db, "config", "bank"));
+                if(bankSnap.exists()) {
+                    let b = bankSnap.data();
+                    document.getElementById('bankId').value = b.bankId || 'MB';
+                    document.getElementById('bankAccNo').value = b.accountNo || '';
+                    document.getElementById('bankAccName').value = b.accountName || '';
+                    if(b.customQR) {
+                        document.getElementById('qrPreviewCurrent').src = b.customQR;
+                        tempQRBase64 = b.customQR;
+                    }
+                }
+
+                // Tải Tài Chính
+                const finSnap = await getDoc(doc(db, "config", "finance"));
+                let finData = { fixedCosts: 0, ingredientCosts: 0, totalRevenue: 0 };
+                if(finSnap.exists()) finData = finSnap.data();
+                document.getElementById('finRevenue').value = finData.totalRevenue || 0;
+                document.getElementById('finFixed').value = finData.fixedCosts || 0;
+                document.getElementById('finIng').value = finData.ingredientCosts || 0;
+                window.calculateProfitUI();
+
+                // Tải Inventory
+                const invSnap = await getDocs(collection(db, "inventory"));
+                globalInventory = invSnap.docs.map(d => d.data());
+                renderInventory();
+
+                // Tải Products
+                const prodSnap = await getDocs(collection(db, "products"));
+                globalProducts = prodSnap.docs.map(d => { let p = d.data(); p.id = d.id; return p; });
+                renderProducts();
+
+            } catch(e) { console.error(e); alert("Lỗi khi tải dữ liệu từ Đám mây."); }
+            hideLoader();
         }
 
-        function renderEventConfig() {
-            let config = getEventConfig();
-            document.getElementById('eventTitle').value = config.title;
-            document.getElementById('eventDesc').value = config.desc;
-            document.getElementById('eventBgColor').value = config.bgColor;
-            document.getElementById('eventIsActive').value = config.isActive.toString();
-        }
-
-        function saveEventConfig() {
+        // LƯU EVENT
+        window.saveEventConfig = async function() {
+            showLoader();
             let config = {
                 title: document.getElementById('eventTitle').value,
                 desc: document.getElementById('eventDesc').value,
                 bgColor: document.getElementById('eventBgColor').value,
                 isActive: document.getElementById('eventIsActive').value === 'true'
             };
-            localStorage.setItem('meda_event_config', JSON.stringify(config));
-            alert("Đã lưu cấu hình Sự kiện!");
+            await setDoc(doc(db, "config", "event"), config);
+            hideLoader(); alert("Đã lưu sự kiện lên Đám mây!");
         }
 
-        // --------- TÀI CHÍNH & LỢI NHUẬN ---------
-        function getFinance() { return JSON.parse(localStorage.getItem('meda_finance')) || { fixedCosts: 0, ingredientCosts: 0 }; }
-
-        function renderFinance() {
-            let autoRevenue = parseFloat(localStorage.getItem('meda_total_revenue')) || 0;
-            document.getElementById('finRevenue').value = autoRevenue;
-            
-            let fin = getFinance();
-            document.getElementById('finFixed').value = fin.fixedCosts || 0;
-            document.getElementById('finIng').value = fin.ingredientCosts || 0;
-            calculateProfitUI();
-        }
-
-        function calculateProfitUI() {
-            let rev = parseFloat(document.getElementById('finRevenue').value) || 0;
-            let ing = parseFloat(document.getElementById('finIng').value) || 0;
-            let fix = parseFloat(document.getElementById('finFixed').value) || 0;
-            let profit = rev - (ing + fix);
-            let profitEl = document.getElementById('finProfit');
-            profitEl.textContent = profit.toLocaleString('vi-VN') + " VNĐ";
-            profitEl.style.color = profit >= 0 ? "var(--green)" : "var(--red)";
-        }
-
-        function addManualCost(inputId) {
-            let amountStr = prompt("Nhập số tiền phát sinh (VNĐ) muốn CỘNG THÊM vào mục này:", "0");
-            let amount = parseFloat(amountStr);
-            if (!isNaN(amount) && amount > 0) {
-                let current = parseFloat(document.getElementById(inputId).value) || 0;
-                document.getElementById(inputId).value = current + amount;
-                updateFinance(); 
-            }
-        }
-
-        function updateFinance() {
-            let fin = {
-                fixedCosts: parseFloat(document.getElementById('finFixed').value) || 0,
-                ingredientCosts: parseFloat(document.getElementById('finIng').value) || 0
-            };
-            localStorage.setItem('meda_finance', JSON.stringify(fin));
-            alert("Đã lưu dữ liệu Chi phí! Tiền lãi đã được tính lại.");
-            renderFinance(); 
-        }
-
-        function resetFinance() {
-            if(confirm("Xác nhận: Làm mới toàn bộ dữ liệu tài chính cho tháng mới? Doanh thu và chi phí sẽ quay về 0.")) {
-                localStorage.setItem('meda_total_revenue', '0'); 
-                localStorage.setItem('meda_finance', JSON.stringify({ fixedCosts: 0, ingredientCosts: 0 })); 
-                renderFinance();
-            }
-        }
-
-        // --------- QUẢN LÝ NGÂN HÀNG & ẢNH QR ---------
-        let tempQRBase64 = "";
-
-        function renderBankConfig() {
-            const bankConfig = JSON.parse(localStorage.getItem('meda_bank')) || { bankId: 'MB', accountNo: '0987654321', accountName: 'QUAN CA PHE ME DA' };
-            document.getElementById('bankId').value = bankConfig.bankId;
-            document.getElementById('bankAccNo').value = bankConfig.accountNo;
-            document.getElementById('bankAccName').value = bankConfig.accountName;
-            
-            const currentQR = localStorage.getItem('meda_qr_code');
-            if (currentQR) {
-                document.getElementById('qrPreviewCurrent').src = currentQR;
-                tempQRBase64 = currentQR;
-            } else {
-                document.getElementById('qrPreviewCurrent').src = "https://via.placeholder.com/150?text=Chua+Co+QR";
-            }
-        }
-
-        function saveBankConfig() {
+        // LƯU BANK
+        window.saveBankConfig = async function() {
+            showLoader();
             const config = {
                 bankId: document.getElementById('bankId').value,
                 accountNo: document.getElementById('bankAccNo').value,
-                accountName: document.getElementById('bankAccName').value.toUpperCase()
+                accountName: document.getElementById('bankAccName').value.toUpperCase(),
+                customQR: tempQRBase64 || null
             };
-            if(!config.accountNo || !config.accountName) return alert("Vui lòng nhập đầy đủ Số tài khoản và Tên chủ tài khoản!");
-            localStorage.setItem('meda_bank', JSON.stringify(config));
-            alert('Đã cập nhật thông tin Ngân hàng!');
+            await setDoc(doc(db, "config", "bank"), config);
+            hideLoader(); alert("Đã cập nhật Ngân hàng!");
         }
 
-        function previewQR(event) {
+        window.previewQR = function(event) {
             const file = event.target.files[0];
             if (file) {
                 const reader = new FileReader();
-                reader.onload = function(e) { 
+                reader.onload = function(e) {
                     const img = new Image();
                     img.onload = function() {
                         const canvas = document.createElement('canvas');
-                        const MAX_WIDTH = 400; const MAX_HEIGHT = 400;
-                        let width = img.width; let height = img.height;
-                        if (width > height) { if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; } } 
-                        else { if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; } }
-                        canvas.width = width; canvas.height = height;
-                        const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, width, height);
+                        let w = img.width, h = img.height;
+                        if(w > 400) { h *= 400/w; w = 400; }
+                        canvas.width = w; canvas.height = h;
+                        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
                         tempQRBase64 = canvas.toDataURL('image/jpeg', 0.8);
                         document.getElementById('qrPreviewCurrent').src = tempQRBase64;
                     };
@@ -581,95 +397,98 @@
                 reader.readAsDataURL(file);
             }
         }
-
-        function saveQRCode() {
-            if (tempQRBase64) { 
-                try {
-                    localStorage.setItem('meda_qr_code', tempQRBase64); 
-                    alert("Đã lưu Ảnh QR tùy chỉnh!"); 
-                } catch(e) {
-                    alert("Lỗi: Ảnh QR có dung lượng quá lớn, vui lòng chọn ảnh khác nhẹ hơn.");
-                }
-            } else { 
-                alert("Vui lòng tải lên một ảnh mã QR mới trước khi lưu."); 
-            }
-        }
-
-        function deleteCustomQR() {
-            if(confirm("Bạn có chắc muốn XÓA ảnh QR tùy chỉnh này không? Trang thanh toán sẽ quay về dùng mã VietQR tự động.")) {
-                localStorage.removeItem('meda_qr_code');
-                tempQRBase64 = "";
-                document.getElementById('qrFile').value = "";
-                document.getElementById('qrPreviewCurrent').src = "https://via.placeholder.com/150?text=Chua+Co+QR";
-                alert("Đã xóa ảnh QR!");
-            }
-        }
-
-        // --------- QUẢN LÝ KHO & SẢN PHẨM ---------
-        function getInventory() { return JSON.parse(localStorage.getItem('meda_inventory')) || []; }
-        function saveInventory(data) { localStorage.setItem('meda_inventory', JSON.stringify(data)); }
-        function getProducts() { return JSON.parse(localStorage.getItem('meda_products')) || []; }
+        window.saveQRCode = window.saveBankConfig;
         
-        function saveProducts(data) { 
-            try {
-                localStorage.setItem('meda_products', JSON.stringify(data)); 
-            } catch(e) {
-                alert("CẢNH BÁO LỖI: Bộ nhớ trình duyệt đã đầy. Nguyên nhân do ảnh tải lên quá nặng, vui lòng nén ảnh hoặc xóa bớt các món cũ.");
-                console.error(e);
+        window.deleteCustomQR = async function() {
+            if(confirm("Bạn có chắc muốn XÓA ảnh QR này?")) {
+                tempQRBase64 = "";
+                document.getElementById('qrPreviewCurrent').src = "https://via.placeholder.com/150?text=Chua+Co+QR";
+                window.saveBankConfig();
             }
         }
 
-        function renderInventory() {
-            const inventory = getInventory();
-            const tbody = document.getElementById('inventoryTable');
-            tbody.innerHTML = '';
-            inventory.forEach((ing) => {
-                let statusBadge = '<span class="badge badge-success">Đầy đủ</span>';
-                if (ing.quantity === 0) statusBadge = '<span class="badge badge-danger">Hết hàng</span>';
-                else if (ing.quantity <= 5) statusBadge = '<span class="badge badge-warning">Sắp hết</span>';
-
-                tbody.innerHTML += `
-                    <tr>
-                        <td><strong>${ing.name}</strong><br><span style="color:#666;">${ing.quantity} ${ing.unit}</span></td>
-                        <td>${statusBadge}</td>
-                        <td>
-                            <button class="btn btn-info btn-small" onclick="addStock('${ing.id}')">+ Nhập</button>
-                            <button class="btn btn-primary btn-small" onclick="openIngredientModal('${ing.id}')">Sửa</button>
-                            <button class="btn btn-danger btn-small" onclick="deleteIngredient('${ing.id}')">Xóa</button>
-                        </td>
-                    </tr>
-                `;
+        // TÀI CHÍNH
+        window.calculateProfitUI = function() {
+            let rev = parseFloat(document.getElementById('finRevenue').value) || 0;
+            let ing = parseFloat(document.getElementById('finIng').value) || 0;
+            let fix = parseFloat(document.getElementById('finFixed').value) || 0;
+            let profit = rev - (ing + fix);
+            let pEl = document.getElementById('finProfit');
+            pEl.textContent = profit.toLocaleString('vi-VN') + " VNĐ";
+            pEl.style.color = profit >= 0 ? "var(--green)" : "var(--red)";
+        }
+        window.addManualCost = function(inputId) {
+            let amt = parseFloat(prompt("Nhập số tiền phát sinh (VNĐ):", "0"));
+            if (amt && amt > 0) {
+                document.getElementById(inputId).value = (parseFloat(document.getElementById(inputId).value) || 0) + amt;
+                window.updateFinance();
+            }
+        }
+        window.updateFinance = async function() {
+            showLoader();
+            await updateDoc(doc(db, "config", "finance"), {
+                fixedCosts: parseFloat(document.getElementById('finFixed').value) || 0,
+                ingredientCosts: parseFloat(document.getElementById('finIng').value) || 0
+            }).catch(async () => {
+                await setDoc(doc(db, "config", "finance"), {
+                    fixedCosts: parseFloat(document.getElementById('finFixed').value) || 0,
+                    ingredientCosts: parseFloat(document.getElementById('finIng').value) || 0,
+                    totalRevenue: parseFloat(document.getElementById('finRevenue').value) || 0
+                });
             });
+            hideLoader(); alert("Đã lưu Chi phí!"); window.calculateProfitUI();
+        }
+        window.resetFinance = async function() {
+            if(confirm("Làm mới báo cáo tháng mới? Doanh thu và chi phí sẽ quay về 0.")) {
+                showLoader();
+                await setDoc(doc(db, "config", "finance"), { fixedCosts: 0, ingredientCosts: 0, totalRevenue: 0 });
+                document.getElementById('finRevenue').value = 0;
+                document.getElementById('finFixed').value = 0;
+                document.getElementById('finIng').value = 0;
+                window.calculateProfitUI(); hideLoader();
+            }
         }
 
-        function addStock(id) {
-            let inv = getInventory();
-            let idx = inv.findIndex(i => i.id === id);
-            let val = prompt(`Nhập số lượng CỘNG THÊM (hoặc số ÂM để TRỪ) cho ${inv[idx].name}:`, "0");
-            if (val && !isNaN(val)) {
-                let addAmount = parseFloat(val);
-                inv[idx].quantity += addAmount;
-                if(inv[idx].quantity < 0) inv[idx].quantity = 0;
-                saveInventory(inv);
+        // KHO NGUYÊN LIỆU
+        function renderInventory() {
+            const tbody = document.getElementById('inventoryTable'); tbody.innerHTML = '';
+            globalInventory.forEach(ing => {
+                let badge = '<span class="badge badge-success">Đầy đủ</span>';
+                if (ing.quantity === 0) badge = '<span class="badge badge-danger">Hết hàng</span>';
+                else if (ing.quantity <= 5) badge = '<span class="badge badge-warning">Sắp hết</span>';
+                tbody.innerHTML += `<tr><td><strong>${ing.name}</strong><br><span style="color:#666;">${ing.quantity} ${ing.unit}</span></td>
+                <td>${badge}</td><td><button class="btn btn-info btn-small" onclick="window.addStock('${ing.id}')">+ Nhập</button>
+                <button class="btn btn-primary btn-small" onclick="window.openIngredientModal('${ing.id}')">Sửa</button>
+                <button class="btn btn-danger btn-small" onclick="window.deleteIngredient('${ing.id}')">Xóa</button></td></tr>`;
+            });
+            renderProducts();
+        }
 
-                if (addAmount > 0) {
-                    let cost = prompt(`Nhập tổng số tiền (VNĐ) bạn đã chi để nhập lô ${inv[idx].name} này\n(Bấm OK hoặc nhập 0 nếu không muốn ghi nhận chi phí lúc này):`, "0");
-                    if (cost && !isNaN(cost) && parseFloat(cost) > 0) {
-                        let fin = getFinance();
-                        fin.ingredientCosts += parseFloat(cost);
-                        localStorage.setItem('meda_finance', JSON.stringify(fin));
-                        renderFinance();
+        window.addStock = async function(id) {
+            let idx = globalInventory.findIndex(i => i.id === id);
+            let val = parseFloat(prompt(`Nhập số lượng CỘNG THÊM (hoặc số ÂM để trừ) cho ${globalInventory[idx].name}:`, "0"));
+            if (val) {
+                showLoader();
+                globalInventory[idx].quantity = Math.max(0, globalInventory[idx].quantity + val);
+                await updateDoc(doc(db, "inventory", id), { quantity: globalInventory[idx].quantity });
+                hideLoader(); renderInventory();
+                
+                if (val > 0) {
+                    let cost = parseFloat(prompt(`Nhập số tiền đã chi để nhập lô ${globalInventory[idx].name} (VNĐ):`, "0"));
+                    if (cost && cost > 0) {
+                        let curIngCost = parseFloat(document.getElementById('finIng').value) || 0;
+                        document.getElementById('finIng').value = curIngCost + cost;
+                        window.updateFinance();
                     }
                 }
-                renderAll();
             }
         }
 
-        function openIngredientModal(id = null) {
+        window.openIngredientModal = function(id = null) {
             document.getElementById('modalIngredient').style.display = 'flex';
             if (id) {
                 document.getElementById('ingCostGroup').style.display = 'none';
-                let inv = getInventory().find(i => i.id === id);
+                let inv = globalInventory.find(i => i.id === id);
                 document.getElementById('ingModalTitle').textContent = "Sửa Nguyên Liệu";
                 document.getElementById('ingEditId').value = id;
                 document.getElementById('ingName').value = inv.name;
@@ -677,222 +496,171 @@
                 document.getElementById('ingUnit').value = inv.unit;
             } else {
                 document.getElementById('ingCostGroup').style.display = 'block';
-                document.getElementById('ingModalTitle').textContent = "Thêm Nguyên Liệu Mới";
+                document.getElementById('ingModalTitle').textContent = "Thêm Mới";
                 document.getElementById('ingEditId').value = ""; document.getElementById('ingName').value = ""; document.getElementById('ingQuantity').value = 0; document.getElementById('ingUnit').value = "g"; document.getElementById('ingCost').value = "";
             }
         }
 
-        function saveIngredient() {
+        window.saveIngredient = async function() {
             let id = document.getElementById('ingEditId').value;
             let name = document.getElementById('ingName').value;
             let qty = parseFloat(document.getElementById('ingQuantity').value) || 0;
             let unit = document.getElementById('ingUnit').value;
-
-            if(!name) return alert("Vui lòng nhập tên nguyên liệu!");
-
-            let inv = getInventory();
+            if(!name) return alert("Vui lòng nhập tên!");
+            showLoader();
+            
             if (id) {
-                let idx = inv.findIndex(i => i.id === id);
-                inv[idx].name = name; inv[idx].quantity = qty; inv[idx].unit = unit;
+                await updateDoc(doc(db, "inventory", id), { name, quantity: qty, unit });
+                let idx = globalInventory.findIndex(i => i.id === id);
+                globalInventory[idx] = { id, name, quantity: qty, unit };
             } else {
-                inv.push({ id: 'ing_' + Date.now(), name, quantity: qty, unit });
+                let newId = 'ing_' + Date.now();
+                let newItem = { id: newId, name, quantity: qty, unit };
+                await setDoc(doc(db, "inventory", newId), newItem);
+                globalInventory.push(newItem);
+                
                 let initialCost = parseFloat(document.getElementById('ingCost').value) || 0;
                 if(initialCost > 0) {
-                    let fin = getFinance(); fin.ingredientCosts += initialCost;
-                    localStorage.setItem('meda_finance', JSON.stringify(fin));
+                    document.getElementById('finIng').value = (parseFloat(document.getElementById('finIng').value) || 0) + initialCost;
+                    window.updateFinance();
                 }
             }
-            saveInventory(inv); closeModals(); renderAll();
+            hideLoader(); window.closeModals(); renderInventory();
         }
 
-        function deleteIngredient(id) {
-            if(confirm("Bạn có chắc chắn muốn xóa nguyên liệu này? Các sản phẩm dùng nguyên liệu này sẽ không pha chế được!")) {
-                let inv = getInventory().filter(i => i.id !== id); saveInventory(inv); renderAll();
+        window.deleteIngredient = async function(id) {
+            if(confirm("Bạn có chắc chắn muốn xóa nguyên liệu này?")) {
+                showLoader();
+                await deleteDoc(doc(db, "inventory", id));
+                globalInventory = globalInventory.filter(i => i.id !== id);
+                hideLoader(); renderInventory();
             }
         }
 
+        // SẢN PHẨM (MENU)
         function renderProducts() {
-            const products = getProducts();
-            const inventory = getInventory();
-            const tbody = document.getElementById('productStockTable');
-            tbody.innerHTML = '';
-            
-            products.forEach(p => {
-                let maxCups = calculateMaxCups(p, inventory);
+            const tbody = document.getElementById('productStockTable'); tbody.innerHTML = '';
+            globalProducts.forEach(p => {
+                let maxCups = Infinity;
+                if(!p.recipe || p.recipe.length===0) maxCups = 999;
+                else {
+                    p.recipe.forEach(ri => {
+                        let inv = globalInventory.find(i => i.id === ri.ingId);
+                        if(!inv || inv.quantity < ri.amount) maxCups = 0;
+                        else maxCups = Math.min(maxCups, Math.floor(inv.quantity / ri.amount));
+                    });
+                }
+                if(maxCups === Infinity) maxCups = 0;
+
                 let badge = '<span class="badge badge-success">Sẵn Sàng</span>';
                 if (maxCups === 0) badge = '<span class="badge badge-danger">Hết Nguyên Liệu</span>';
                 else if (maxCups < 10) badge = '<span class="badge badge-warning">Sắp Hết</span>';
 
-                let imgSrc = p.image || 'https://via.placeholder.com/60';
-                tbody.innerHTML += `
-                    <tr>
-                        <td><img src="${imgSrc}" style="width:50px; height:50px; object-fit:cover; border-radius:4px;"></td>
-                        <td><strong>${p.name}</strong><br><span style="color:var(--accent); font-weight:bold;">${p.price.toLocaleString('vi-VN')} đ</span></td>
-                        <td>${maxCups} ly <br> ${badge}</td>
-                        <td>
-                            <button class="btn btn-primary btn-small" onclick="openProductModal('${p.id}')">Sửa</button>
-                            <button class="btn btn-danger btn-small" onclick="deleteProduct('${p.id}')">Xóa</button>
-                        </td>
-                    </tr>
-                `;
+                tbody.innerHTML += `<tr><td><img src="${p.image||''}" style="width:50px;height:50px;object-fit:cover;border-radius:4px;float:left;margin-right:10px;">
+                <strong>${p.name}</strong><br><span style="color:var(--accent); font-weight:bold;">${p.price.toLocaleString('vi-VN')} đ</span></td>
+                <td>${maxCups} ly <br> ${badge}</td>
+                <td><button class="btn btn-primary btn-small" onclick="window.openProductModal('${p.id}')">Sửa</button>
+                <button class="btn btn-danger btn-small" onclick="window.deleteProduct('${p.id}')">Xóa</button></td></tr>`;
             });
         }
 
-        function calculateMaxCups(product, inventory) {
-            if (!product.recipe || product.recipe.length === 0) return 999;
-            let maxCups = Infinity;
-            for (const item of product.recipe) {
-                const ing = inventory.find(i => i.id === item.ingId);
-                if (!ing || ing.quantity < item.amount) return 0;
-                const possible = Math.floor(ing.quantity / item.amount);
-                if (possible < maxCups) maxCups = possible;
-            }
-            return maxCups === Infinity ? 0 : maxCups;
-        }
-
-        function previewImageProduct(event) {
+        window.previewImageProduct = function(event) {
             const file = event.target.files[0];
             const btnSave = document.getElementById('btnSaveProduct');
-            const loadingText = document.getElementById('imgLoading');
-            
             if (file) {
-                if(file.size <= 500 * 1024) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        document.getElementById('imgPreview').src = e.target.result;
+                btnSave.disabled = true; document.getElementById('imgLoading').style.display = 'block';
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        let w = img.width, h = img.height;
+                        if (w > 400) { h *= 400/w; w = 400; }
+                        canvas.width = w; canvas.height = h;
+                        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                        let b64 = canvas.toDataURL('image/jpeg', 0.7);
+                        document.getElementById('imgPreview').src = b64;
                         document.getElementById('imgPreview').style.display = 'block';
-                        document.getElementById('pImgBase64').value = e.target.result;
-                    }
-                    reader.readAsDataURL(file);
-                } else {
-                    btnSave.disabled = true; loadingText.style.display = 'block';
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        const img = new Image();
-                        img.onload = function() {
-                            const canvas = document.createElement('canvas');
-                            const MAX_WIDTH = 400; const MAX_HEIGHT = 400;
-                            let width = img.width; let height = img.height;
-
-                            if (width > height) { if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; } } 
-                            else { if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; } }
-                            
-                            canvas.width = width; canvas.height = height;
-                            const ctx = canvas.getContext('2d');
-                            ctx.drawImage(img, 0, 0, width, height);
-                            
-                            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
-                            document.getElementById('imgPreview').src = compressedBase64;
-                            document.getElementById('imgPreview').style.display = 'block';
-                            document.getElementById('pImgBase64').value = compressedBase64;
-                            
-                            btnSave.disabled = false; loadingText.style.display = 'none';
-                        };
-                        img.src = e.target.result;
-                    }
-                    reader.readAsDataURL(file);
+                        document.getElementById('pImgBase64').value = b64;
+                        btnSave.disabled = false; document.getElementById('imgLoading').style.display = 'none';
+                    };
+                    img.src = e.target.result;
                 }
+                reader.readAsDataURL(file);
             }
         }
 
-        function openProductModal(id = null) {
+        window.openProductModal = function(id = null) {
             document.getElementById('modalProduct').style.display = 'flex';
-            const inventory = getInventory();
-            const recipeDiv = document.getElementById('recipeInputs');
-            
-            document.getElementById('imgLoading').style.display = 'none';
-            document.getElementById('btnSaveProduct').disabled = false;
+            const recipeDiv = document.getElementById('recipeInputs'); recipeDiv.innerHTML = '';
             
             if (id) {
-                let prod = getProducts().find(p => p.id === id);
+                let p = globalProducts.find(x => x.id === id);
                 document.getElementById('prodModalTitle').textContent = "Sửa Sản Phẩm";
                 document.getElementById('prodEditId').value = id;
-                document.getElementById('pName').value = prod.name;
-                document.getElementById('pDesc').value = prod.description || '';
-                document.getElementById('pPrice').value = prod.price;
-                if(prod.image) {
-                    document.getElementById('imgPreview').src = prod.image;
+                document.getElementById('pName').value = p.name;
+                document.getElementById('pDesc').value = p.description || '';
+                document.getElementById('pPrice').value = p.price;
+                if(p.image) {
+                    document.getElementById('imgPreview').src = p.image;
                     document.getElementById('imgPreview').style.display = 'block';
-                    document.getElementById('pImgBase64').value = prod.image;
+                    document.getElementById('pImgBase64').value = p.image;
                 }
-                recipeDiv.innerHTML = '';
-                inventory.forEach(ing => {
-                    let rItem = prod.recipe ? prod.recipe.find(r => r.ingId === ing.id) : null;
-                    let isChecked = rItem ? 'checked' : ''; let amount = rItem ? rItem.amount : '';
-                    recipeDiv.innerHTML += `
-                        <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 6px;">
-                            <input type="checkbox" id="chk_${ing.id}" value="${ing.id}" ${isChecked}>
-                            <label for="chk_${ing.id}" style="width: 140px; font-size:0.85rem;">${ing.name}</label>
-                            <input type="number" id="amt_${ing.id}" placeholder="${ing.unit}" value="${amount}" style="width: 80px; padding: 4px;">
-                        </div>
-                    `;
+                globalInventory.forEach(ing => {
+                    let rItem = p.recipe ? p.recipe.find(r => r.ingId === ing.id) : null;
+                    recipeDiv.innerHTML += `<div style="display:flex;gap:8px;margin-bottom:6px;">
+                        <input type="checkbox" id="chk_${ing.id}" value="${ing.id}" ${rItem?'checked':''}>
+                        <label for="chk_${ing.id}" style="width:140px;font-size:0.85rem;">${ing.name}</label>
+                        <input type="number" id="amt_${ing.id}" placeholder="${ing.unit}" value="${rItem?rItem.amount:''}" style="width:80px;padding:4px;"></div>`;
                 });
             } else {
                 document.getElementById('prodModalTitle').textContent = "Thêm Sản Phẩm Mới";
                 document.getElementById('prodEditId').value = ""; document.getElementById('pName').value = ""; document.getElementById('pDesc').value = ""; document.getElementById('pPrice').value = ""; document.getElementById('pFile').value = ""; document.getElementById('pImgBase64').value = ""; document.getElementById('imgPreview').style.display = 'none';
-                recipeDiv.innerHTML = '';
-                inventory.forEach(ing => {
-                    recipeDiv.innerHTML += `
-                        <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 6px;">
-                            <input type="checkbox" id="chk_${ing.id}">
-                            <label style="width: 140px; font-size:0.85rem;">${ing.name}</label>
-                            <input type="number" id="amt_${ing.id}" placeholder="${ing.unit}" style="width: 80px; padding: 4px;">
-                        </div>
-                    `;
+                globalInventory.forEach(ing => {
+                    recipeDiv.innerHTML += `<div style="display:flex;gap:8px;margin-bottom:6px;">
+                        <input type="checkbox" id="chk_${ing.id}">
+                        <label style="width:140px;font-size:0.85rem;">${ing.name}</label>
+                        <input type="number" id="amt_${ing.id}" placeholder="${ing.unit}" style="width:80px;padding:4px;"></div>`;
                 });
             }
         }
 
-        function saveProduct() {
+        window.saveProduct = async function() {
             let id = document.getElementById('prodEditId').value;
             let name = document.getElementById('pName').value;
             let desc = document.getElementById('pDesc').value;
             let price = parseFloat(document.getElementById('pPrice').value);
             let imgData = document.getElementById('pImgBase64').value;
-            
-            if (!name || !price) return alert("Vui lòng nhập tên và giá món!");
+            if (!name || !price) return alert("Nhập tên và giá món!");
 
-            let inventory = getInventory(); let recipe = [];
-            inventory.forEach(ing => {
+            let recipe = [];
+            globalInventory.forEach(ing => {
                 let chk = document.getElementById(`chk_${ing.id}`); let amt = document.getElementById(`amt_${ing.id}`);
-                if (chk && chk.checked && parseFloat(amt.value) > 0) { recipe.push({ ingId: ing.id, amount: parseFloat(amt.value) }); }
+                if (chk && chk.checked && parseFloat(amt.value) > 0) recipe.push({ ingId: ing.id, amount: parseFloat(amt.value) });
             });
 
-            let prods = getProducts();
+            showLoader();
+            let pData = { name, description: desc, price, recipe, image: imgData || 'https://via.placeholder.com/300x200?text=Me+Da' };
             if (id) {
-                let idx = prods.findIndex(p => p.id === id);
-                prods[idx].name = name; prods[idx].description = desc; prods[idx].price = price; prods[idx].recipe = recipe;
-                if(imgData) prods[idx].image = imgData;
+                await updateDoc(doc(db, "products", id), pData);
+                let idx = globalProducts.findIndex(p => p.id === id);
+                globalProducts[idx] = { ...pData, id };
             } else {
-                prods.push({ id: 'p_' + Date.now(), name: name, description: desc, price: price, image: imgData || 'https://via.placeholder.com/300x200?text=Me+Da', recipe: recipe });
+                let newId = 'p_' + Date.now();
+                await setDoc(doc(db, "products", newId), pData);
+                globalProducts.push({ ...pData, id: newId });
             }
-            saveProducts(prods); closeModals(); renderAll();
+            hideLoader(); window.closeModals(); renderProducts();
         }
 
-        function deleteProduct(id) {
-            if(confirm("Bạn có chắc muốn xóa sản phẩm này khỏi Menu không?")) {
-                let prods = getProducts().filter(p => p.id !== id); saveProducts(prods); renderAll();
+        window.deleteProduct = async function(id) {
+            if(confirm("Xóa sản phẩm này?")) {
+                showLoader();
+                await deleteDoc(doc(db, "products", id));
+                globalProducts = globalProducts.filter(p => p.id !== id);
+                hideLoader(); renderProducts();
             }
         }
-
-        function closeModals() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); }
-
-        function renderAll() {
-            renderEventConfig();
-            renderFinance();
-            renderBankConfig();
-            renderInventory();
-            renderProducts();
-        }
-
-        window.addEventListener('storage', function(e) {
-            if(e.key === 'meda_total_revenue' || e.key === 'meda_finance') {
-                renderFinance();
-            }
-        });
-
-        renderAll();
-
     </script>
 </body>
 </html>

@@ -6,10 +6,7 @@
     <title>Quản Lý Đơn Hàng - Mê Đá</title>
     <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --bg-color: #FBF6EE; --card-bg: #FFFDF9; --primary: #3D2B1F; --accent: #C85A32;
-            --border: #E8DFC8; --green: #2E7D32; --amber: #EF6C00;
-        }
+        :root { --bg-color: #FBF6EE; --card-bg: #FFFDF9; --primary: #3D2B1F; --accent: #C85A32; --border: #E8DFC8; --green: #2E7D32; --amber: #EF6C00; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg-color); color: #2B1E16; }
         
@@ -19,9 +16,9 @@
         .btn-header:hover { background: rgba(255,255,255,0.3); }
         
         .main-content { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
-        
         .orders-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
-        .order-card { background: var(--card-bg); border: 2px solid var(--border); border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; }
+        .order-card { background: var(--card-bg); border: 2px solid var(--border); border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; animation: slideIn 0.3s ease-out; }
+        @keyframes slideIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         .order-card.done { opacity: 0.6; border-style: dashed; }
         
         .order-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px dashed var(--border); padding-bottom: 10px; margin-bottom: 10px; }
@@ -33,22 +30,18 @@
 
         .order-items { flex-grow: 1; margin-bottom: 15px; font-size: 0.95rem; }
         .order-item { display: flex; justify-content: space-between; margin-bottom: 5px; font-weight: 600; border-bottom: 1px solid #f0e6d6; padding-bottom: 4px;}
-        
         .order-footer { text-align: center; margin-top: auto; }
-        .btn-done { width: 100%; padding: 10px; background-color: var(--green); color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 1rem; }
+        .btn-done { width: 100%; padding: 10px; background-color: var(--green); color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 1rem; transition: 0.2s;}
         .btn-done:hover { background-color: #1b5e20; }
         .time-text { font-size: 0.8rem; color: #888; margin-bottom: 8px; display: block; }
 
-        /* GIAO DIỆN ĐĂNG NHẬP (Giống Admin) */
         #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(61, 43, 31, 0.85); display: flex; justify-content: center; align-items: center; z-index: 1000; }
         .login-box { background: var(--card-bg); padding: 2.5rem; border-radius: 12px; width: 360px; text-align: center; box-shadow: 0 8px 25px rgba(0,0,0,0.2); border: 2px solid var(--border); }
         .login-box h2 { font-family: 'Merriweather', serif; color: var(--primary); margin-bottom: 1.5rem; }
         .login-box input { width: 100%; padding: 10px; margin-bottom: 1rem; border: 1px solid var(--border); border-radius: 6px; font-family: inherit;}
         .login-box button { width: 100%; padding: 12px; background: var(--accent); color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 1rem;}
         .forgot-pass-link { display: block; text-align: right; font-size: 0.85rem; color: var(--accent); margin-top: -10px; margin-bottom: 15px; font-weight: 600; text-decoration: none; }
-        .forgot-pass-link:hover { text-decoration: underline; }
-
-        /* MODAL QUÊN MẬT KHẨU */
+        
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 999; }
         .modal-content { background: #fff; padding: 2rem; border-radius: 8px; width: 400px; max-width: 90%; }
         .modal-header { font-family: 'Merriweather', serif; font-size: 1.2rem; color: var(--primary); margin-bottom: 1rem; text-align: left;}
@@ -67,9 +60,8 @@
             <h2>Đăng Nhập</h2>
             <input type="text" id="staffUser" placeholder="Tên đăng nhập">
             <input type="password" id="staffPass" placeholder="Mật khẩu">
-            <a href="#" class="forgot-pass-link" onclick="openForgotModal()">Quên mật khẩu?</a>
-            <button onclick="loginStaff()">Đăng nhập</button>
-            
+            <a href="#" class="forgot-pass-link" onclick="window.openForgotModal()">Quên mật khẩu?</a>
+            <button onclick="window.loginStaff()">Vào Trang Bếp</button>
             <a href="index.html" style="display: block; margin-top: 15px; font-size: 0.85rem; color: #7A6B62;">⬅ Quay về trang đặt món</a>
         </div>
     </div>
@@ -84,150 +76,138 @@
             </div>
             <div class="input-group">
                 <label>Mã khôi phục</label>
-                <input type="text" id="fgCode" placeholder="Nhập mã khôi phục">
+                <input type="text" id="fgCode" placeholder="Mặc định là: meda">
             </div>
             <div class="input-group">
                 <label>Mật khẩu mới</label>
                 <input type="password" id="fgNewPass" placeholder="Nhập mật khẩu mới">
             </div>
             <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 1.5rem;">
-                <button class="btn" style="background:#ccc; color:#000;" onclick="closeModals()">Hủy</button>
-                <button class="btn btn-accent" onclick="processResetPassword()">Đổi mật khẩu</button>
+                <button class="btn" style="background:#ccc; color:#000;" onclick="window.closeModals()">Hủy</button>
+                <button class="btn btn-accent" onclick="window.processResetPassword()">Đổi mật khẩu</button>
             </div>
         </div>
     </div>
 
     <header>
-        <h1>👨‍🍳 Quầy Pha Chế</h1>
+        <h1>👨‍🍳 Quầy Pha Chế <span style="font-size: 0.8rem; background: var(--green); padding: 2px 6px; border-radius: 8px;">LIVE</span></h1>
         <div style="display: flex; gap: 10px;">
             <a href="index.html" class="btn-header" style="background: var(--blue); border-color: var(--blue);">🛒 Trang Đặt Hàng</a>
-            <button class="btn-header" onclick="logoutStaff()">Đăng Xuất</button>
+            <button class="btn-header" onclick="window.logoutStaff()">Đăng Xuất</button>
         </div>
     </header>
 
     <div class="main-content">
         <h2 style="margin-bottom: 1rem; color: var(--primary); font-family: 'Merriweather', serif;">Đơn Hàng Chờ Xử Lý</h2>
-        <div id="pendingOrdersContainer" class="orders-grid">
-            <!-- Đơn hàng sẽ hiện ở đây -->
-        </div>
+        <div id="pendingOrdersContainer" class="orders-grid"></div>
 
-        <h2 style="margin-top: 3rem; margin-bottom: 1rem; color: #7A6B62; font-family: 'Merriweather', serif;">Đơn Hàng Đã Pha Xong (Hôm nay)</h2>
-        <div id="completedOrdersContainer" class="orders-grid">
-            <!-- Đơn đã xong -->
-        </div>
+        <h2 style="margin-top: 3rem; margin-bottom: 1rem; color: #7A6B62; font-family: 'Merriweather', serif;">Đơn Hàng Đã Pha Xong (50 đơn gần nhất)</h2>
+        <div id="completedOrdersContainer" class="orders-grid"></div>
     </div>
 
-    <script>
-        // --- XỬ LÝ ĐĂNG NHẬP NHÂN VIÊN ---
+    <!-- TÍCH HỢP FIREBASE REALTIME -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
+        import { getFirestore, collection, query, orderBy, onSnapshot, doc, updateDoc, limit } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAtZN8CGdH0M-OTs9Z2gGCsiA2AWJ0WRXg",
+            authDomain: "meda-e0955.firebaseapp.com",
+            projectId: "meda-e0955",
+            storageBucket: "meda-e0955.firebasestorage.app",
+            messagingSenderId: "446317572827",
+            appId: "1:446317572827:web:bdad243a1e5ba1ceba12fe",
+            measurementId: "G-8FVX96XD07"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // -- BẢO MẬT & ĐĂNG NHẬP --
         if (sessionStorage.getItem('meda_staff_logged_in') === 'true') {
             document.getElementById('loginOverlay').style.display = 'none';
+            startListeningOrders();
         }
 
-        function loginStaff() {
+        window.loginStaff = function() {
             const currentPass = localStorage.getItem('meda_staff_pass') || '123456';
             if (document.getElementById('staffUser').value === 'nhanvien' && document.getElementById('staffPass').value === currentPass) {
                 sessionStorage.setItem('meda_staff_logged_in', 'true');
                 document.getElementById('loginOverlay').style.display = 'none';
-                renderOrders(); // Nạp đơn hàng sau khi vào
-            } else {
-                alert("Sai tài khoản hoặc mật khẩu!");
-            }
+                startListeningOrders();
+            } else { alert("Sai tài khoản hoặc mật khẩu!"); }
         }
 
-        function logoutStaff() {
-            sessionStorage.removeItem('meda_staff_logged_in');
-            window.location.reload();
-        }
-
-        // --- QUÊN MẬT KHẨU ---
-        function openForgotModal() { document.getElementById('modalForgot').style.display = 'flex'; }
-        function closeModals() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); }
+        window.logoutStaff = function() { sessionStorage.removeItem('meda_staff_logged_in'); window.location.reload(); }
+        window.openForgotModal = function() { document.getElementById('modalForgot').style.display = 'flex'; }
+        window.closeModals = function() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); }
         
-        function processResetPassword() {
+        window.processResetPassword = function() {
             const user = document.getElementById('fgUser').value;
             const code = document.getElementById('fgCode').value;
             const newPass = document.getElementById('fgNewPass').value;
             
-            // Tài khoản phải là nhanvien
             if (user === 'nhanvien' && code === 'medacoffee') {
                 if (newPass.length < 6) return alert("Mật khẩu mới phải có ít nhất 6 ký tự!");
                 localStorage.setItem('meda_staff_pass', newPass);
                 alert("Đổi mật khẩu thành công! Vui lòng đăng nhập lại.");
-                closeModals();
-                document.getElementById('fgUser').value = ''; document.getElementById('fgCode').value = ''; 
-                document.getElementById('fgNewPass').value = ''; document.getElementById('staffPass').value = '';
-            } else { 
-                alert("Tên đăng nhập hoặc Mã khôi phục không chính xác!"); 
-            }
+                window.closeModals();
+                document.getElementById('staffPass').value = '';
+            } else { alert("Tên đăng nhập hoặc Mã khôi phục không chính xác!"); }
         }
 
-        // --- XỬ LÝ ĐƠN HÀNG ---
-        function renderOrders() {
-            // Không render ngầm nếu chưa đăng nhập
-            if (sessionStorage.getItem('meda_staff_logged_in') !== 'true') return;
-
-            const orders = JSON.parse(localStorage.getItem('meda_orders')) || [];
-            const pendingContainer = document.getElementById('pendingOrdersContainer');
-            const completedContainer = document.getElementById('completedOrdersContainer');
+        // -- LẮNG NGHE ĐƠN HÀNG REALTIME TỪ ĐÁM MÂY --
+        function startListeningOrders() {
+            // Lấy 50 đơn hàng mới nhất
+            const q = query(collection(db, "orders"), orderBy("timestamp", "desc"), limit(50));
             
-            pendingContainer.innerHTML = '';
-            completedContainer.innerHTML = '';
+            // onSnapshot: Kích hoạt ngay lập tức khi trên Cloud có đơn hàng mới (Hoặc có ai đó thay đổi trạng thái)
+            onSnapshot(q, (snapshot) => {
+                const pendingContainer = document.getElementById('pendingOrdersContainer');
+                const completedContainer = document.getElementById('completedOrdersContainer');
+                pendingContainer.innerHTML = ''; completedContainer.innerHTML = '';
 
-            let hasPending = false;
-            let hasCompleted = false;
+                let hasPending = false; let hasCompleted = false;
 
-            orders.forEach((order, index) => {
-                const isDone = order.status === 'Hoàn thành';
-                const typeClass = order.orderType === 'Tại chỗ' ? 'type-dinein' : 'type-takeaway';
-                
-                let itemsHtml = '';
-                order.items.forEach(item => {
-                    itemsHtml += `<div class="order-item"><span>${item.name}</span> <span style="color:var(--accent);">x${item.quantity}</span></div>`;
+                snapshot.forEach(docSnap => {
+                    const order = docSnap.data();
+                    const dbId = docSnap.id;
+                    const isDone = order.status === 'Hoàn thành';
+                    const typeClass = order.orderType === 'Tại chỗ' ? 'type-dinein' : 'type-takeaway';
+                    
+                    let itemsHtml = '';
+                    order.items.forEach(item => {
+                        itemsHtml += `<div class="order-item"><span>${item.name}</span> <span style="color:var(--accent);">x${item.quantity}</span></div>`;
+                    });
+
+                    const cardHtml = `
+                        <div class="order-card ${isDone ? 'done' : ''}">
+                            <div class="order-header">
+                                <div><span class="customer-name">👤 ${order.customerName}</span><br><span class="order-type ${typeClass}">${order.orderType}</span></div>
+                                <div class="queue-number">#${order.queueNumber}</div>
+                            </div>
+                            <div class="order-items">${itemsHtml}</div>
+                            <div class="order-footer">
+                                <span class="time-text">🕒 Đặt lúc: ${order.createdAt}</span>
+                                ${!isDone ? `<button class="btn-done" onclick="window.markAsDone('${dbId}')">✔ Đã Pha Chế Xong</button>` : `<strong style="color: var(--green);">Đã Gọi Khách</strong>`}
+                            </div>
+                        </div>
+                    `;
+
+                    if (!isDone) { pendingContainer.innerHTML += cardHtml; hasPending = true; } 
+                    else { completedContainer.innerHTML += cardHtml; hasCompleted = true; }
                 });
 
-                const cardHtml = `
-                    <div class="order-card ${isDone ? 'done' : ''}">
-                        <div class="order-header">
-                            <div>
-                                <span class="customer-name">👤 ${order.customerName}</span><br>
-                                <span class="order-type ${typeClass}">${order.orderType}</span>
-                            </div>
-                            <div class="queue-number">#${order.queueNumber}</div>
-                        </div>
-                        <div class="order-items">${itemsHtml}</div>
-                        <div class="order-footer">
-                            <span class="time-text">🕒 Đặt lúc: ${order.createdAt}</span>
-                            ${!isDone ? `<button class="btn-done" onclick="markAsDone('${order.orderId}')">✔ Đã Pha Chế Xong</button>` : `<strong style="color: var(--green);">Đã Gọi Khách</strong>`}
-                        </div>
-                    </div>
-                `;
-
-                if (!isDone) {
-                    pendingContainer.innerHTML += cardHtml;
-                    hasPending = true;
-                } else {
-                    completedContainer.innerHTML += cardHtml;
-                    hasCompleted = true;
-                }
+                if (!hasPending) pendingContainer.innerHTML = '<p style="color:#888; font-style:italic;">Tuyệt vời! Hiện không có đơn hàng nào đang chờ.</p>';
+                if (!hasCompleted) completedContainer.innerHTML = '<p style="color:#888; font-style:italic;">Chưa có đơn nào hoàn thành.</p>';
             });
-
-            if (!hasPending) pendingContainer.innerHTML = '<p style="color:#888; font-style:italic;">Tuyệt vời! Hiện không có đơn hàng nào đang chờ pha chế.</p>';
-            if (!hasCompleted) completedContainer.innerHTML = '<p style="color:#888; font-style:italic;">Chưa có đơn nào hoàn thành.</p>';
         }
 
-        function markAsDone(orderId) {
-            let orders = JSON.parse(localStorage.getItem('meda_orders')) || [];
-            const idx = orders.findIndex(o => o.orderId === orderId);
-            if (idx !== -1) {
-                orders[idx].status = 'Hoàn thành';
-                localStorage.setItem('meda_orders', JSON.stringify(orders));
-                renderOrders();
-            }
+        // Bấm hoàn thành thì đổi trạng thái trên Đám mây
+        window.markAsDone = async function(dbId) {
+            try {
+                await updateDoc(doc(db, "orders", dbId), { status: "Hoàn thành" });
+            } catch(e) { alert("Lỗi khi cập nhật trạng thái đơn!"); }
         }
-
-        // Tự động làm mới trang mỗi 3 giây để nhận đơn liên tục từ khách
-        setInterval(renderOrders, 3000);
-        renderOrders();
     </script>
 </body>
 </html>
