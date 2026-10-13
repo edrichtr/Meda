@@ -3,123 +3,427 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mê Đá</title>
+    <title>Mê Đá - Chữa lành giữa chốn xô bồ</title>
     <link href="logo.jpg" rel="icon" type="image/x-icon">
-    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Phông chữ: Merriweather & Plus Jakarta Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,400;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
     <style>
-        :root { --bg-color: #FBF6EE; --card-bg: #FFFDF9; --primary: #3D2B1F; --accent: #C85A32; --accent-hover: #A03C1B; --text-main: #2B1E16; --text-muted: #7A6B62; --border: #E8DFC8; --green: #2E7D32; --red: #C62828; }
+        :root { 
+            --bg-color: #F8F5F0; 
+            --card-bg: #FFFFFF; 
+            --primary: #30231D; 
+            --accent: #C85A32; 
+            --accent-hover: #A0401D; 
+            --text-main: #30231D; 
+            --text-muted: #7A6B62; 
+            --border: #E8DFC8; 
+            --green: #2E7D32; 
+            --red: #C62828; 
+            
+            --font-heading: 'Merriweather', serif;
+            --font-body: 'Plus Jakarta Sans', sans-serif;
+        }
+
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg-color); color: var(--text-main); line-height: 1.5; }
-        header { background-color: var(--primary); color: #FAF4EB; padding: 2rem 2rem; text-align: center; border-bottom: 4px solid var(--accent); position: relative; display: flex; flex-direction: column; align-items: center; }
-        .logo { width: 90px; height: 90px; object-fit: cover; border-radius: 50%; border: 3px solid var(--accent); margin-bottom: 12px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); background-color: #FFFDF9; }
-        header h1 { font-family: 'Merriweather', serif; font-size: 2.2rem; letter-spacing: 1px; color: #F3E5D8; }
-        header p { font-size: 0.95rem; color: #D2C2B4; font-style: italic; }
-        .top-links { position: absolute; right: 1.5rem; top: 1.5rem; display: flex; flex-direction: column; gap: 8px; }
-        .nav-link { color: #F3E5D8; text-decoration: none; font-size: 0.85rem; background: rgba(255,255,255,0.1); padding: 6px 14px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2); transition: all 0.2s; font-weight: 600; text-align: center; }
+        body { font-family: var(--font-body); background-color: var(--bg-color); color: var(--text-main); line-height: 1.5; overflow-x: hidden; position: relative;}
+
+        /* --- 1. HIỆU ỨNG MÔI TRƯỜNG (NOISE & LÁ RƠI) --- */
+        .film-grain {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            pointer-events: none; z-index: 9999; opacity: 0.04;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+        
+        .falling-leaves { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; overflow: hidden; }
+        .leaf { position: absolute; width: 12px; height: 12px; background-color: rgba(122, 107, 98, 0.3); border-radius: 0 100% 0 100%; animation: falling linear infinite; }
+        @keyframes falling { 0% { transform: translate(0, -10vh) rotate(0deg); opacity: 1; } 100% { transform: translate(150px, 110vh) rotate(360deg); opacity: 0; } }
+
+        /* --- SÓNG BIỂN CUỘN (THÊM MỚI) --- */
+        .ocean-waves {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 15vh;
+            min-height: 100px;
+            max-height: 150px;
+            z-index: 10; /* Nằm dưới giỏ hàng nhưng trên nền */
+            pointer-events: none; /* Không cản trở click */
+        }
+        .waves-svg {
+            width: 100%;
+            height: 100%;
+        }
+        .parallax > use {
+            animation: move-forever 25s cubic-bezier(.55,.5,.45,.5) infinite;
+        }
+        .parallax > use:nth-child(1) { animation-delay: -2s; animation-duration: 7s; }
+        .parallax > use:nth-child(2) { animation-delay: -3s; animation-duration: 10s; }
+        .parallax > use:nth-child(3) { animation-delay: -4s; animation-duration: 13s; }
+        .parallax > use:nth-child(4) { animation-delay: -5s; animation-duration: 20s; }
+        @keyframes move-forever {
+            0% { transform: translate3d(-90px,0,0); }
+            100% { transform: translate3d(85px,0,0); }
+        }
+
+        /* --- SINH VẬT BAY: RỒNG VÀ CHIM LẠC (THÊM MỚI) --- */
+        .mythical-creature {
+            position: fixed;
+            pointer-events: none;
+            z-index: 50;
+            opacity: 0.9;
+            filter: drop-shadow(0 10px 15px rgba(0,0,0,0.3));
+        }
+        .dragon-3d {
+            top: 15%;
+            left: -300px;
+            width: 250px; /* Kích thước rồng */
+            animation: flyRight 35s linear infinite;
+        }
+        .chimlac-3d {
+            top: 8%;
+            right: -200px;
+            width: 150px; /* Kích thước chim lạc */
+            animation: flyLeft 25s linear infinite 10s; /* Trễ 10s so với rồng */
+        }
+        @keyframes flyRight {
+            0% { transform: translateX(0) translateY(0) rotate(5deg) scaleX(-1); }
+            25% { transform: translateX(35vw) translateY(-20px) rotate(0deg) scaleX(-1); }
+            50% { transform: translateX(70vw) translateY(10px) rotate(5deg) scaleX(-1); }
+            100% { transform: translateX(120vw) translateY(-30px) rotate(-5deg) scaleX(-1); }
+        }
+        @keyframes flyLeft {
+            0% { transform: translateX(0) translateY(0) rotate(-5deg); }
+            25% { transform: translateX(-35vw) translateY(20px) rotate(0deg); }
+            50% { transform: translateX(-70vw) translateY(-10px) rotate(-5deg); }
+            100% { transform: translateX(-120vw) translateY(30px) rotate(5deg); }
+        }
+
+        /* --- 2. TOP NAVIGATION --- */
+        .top-nav {
+            position: absolute; top: 0; left: 0; width: 100%; padding: 1.5rem 3rem;
+            display: flex; justify-content: space-between; align-items: center;
+            z-index: 100;
+        }
+        .nav-brand { font-family: var(--font-heading); font-size: 1.5rem; font-weight: 700; color: #f6f9d0; letter-spacing: 2px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+        .nav-links { display: flex; gap: 15px; }
+        .nav-link { 
+            color: #FFF; text-decoration: none; font-size: 0.9rem; font-weight: 600; 
+            background: rgba(0,0,0,0.4); padding: 8px 18px; border-radius: 30px; 
+            backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.2); transition: 0.3s;
+        }
         .nav-link:hover { background: var(--accent); border-color: var(--accent); }
-        @media (max-width: 600px) { .top-links { position: static; flex-direction: row; margin-top: 15px; } }
-        #dynamicEventBanner { max-width: 1200px; margin: 1.5rem auto 0; padding: 1rem 1.5rem; border: 2px dashed var(--accent); border-radius: 12px; display: none; align-items: center; justify-content: space-between; box-shadow: 0 4px 10px rgba(200, 90, 50, 0.1); animation: pulseBanner 3s infinite; }
-        @keyframes pulseBanner { 0% { box-shadow: 0 4px 10px rgba(200, 90, 50, 0.1); } 50% { box-shadow: 0 4px 20px rgba(200, 90, 50, 0.3); } 100% { box-shadow: 0 4px 10px rgba(200, 90, 50, 0.1); } }
-        .event-content h3 { color: var(--red); font-family: 'Merriweather', serif; font-size: 1.3rem; margin-bottom: 0.3rem; display: flex; align-items: center; gap: 8px; }
-        .event-badge { background: var(--red); color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; animation: blinkText 1s infinite; }
-        @keyframes blinkText { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-        .event-content p { font-size: 0.95rem; color: var(--primary); font-weight: 600; }
-        .container { max-width: 1200px; margin: 1.5rem auto 2rem; padding: 0 1rem; display: grid; grid-template-columns: 1fr 360px; gap: 2rem; }
-        @media (max-width: 900px) { .container { grid-template-columns: 1fr; } #dynamicEventBanner { flex-direction: column; text-align: center; gap: 10px; margin: 1rem 1rem 0; } }
-        .menu-title { font-family: 'Merriweather', serif; font-size: 1.5rem; margin-bottom: 1.2rem; padding-bottom: 0.5rem; border-bottom: 2px dashed var(--border); color: var(--primary); }
-        .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1.5rem; }
-        .product-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 4px 12px rgba(61, 43, 31, 0.05); transition: transform 0.2s, box-shadow 0.2s; }
-        .product-card:hover { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(61, 43, 31, 0.1); }
-        .product-img { width: 100%; height: 180px; object-fit: cover; background-color: #EFE8DC; }
-        .product-info { padding: 1.2rem 1rem; display: flex; flex-direction: column; flex-grow: 1; }
-        .product-name { font-family: 'Merriweather', serif; font-size: 1.2rem; font-weight: 700; color: var(--primary); margin-bottom: 0.3rem; }
-        .product-desc { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.8rem; font-style: italic; line-height: 1.4; flex-grow: 1; }
-        .product-price { font-weight: 700; color: var(--accent); font-size: 1.1rem; margin-bottom: 0.5rem; }
-        .stock-tag { font-size: 0.8rem; font-weight: 600; margin-bottom: 1rem; display: inline-block; }
+
+        /* --- 3. HERO BANNER - SỬA LẠI THÀNH background.png --- */
+        .hero-banner {
+            position: relative; height: 70vh; min-height: 450px;
+            /* Đã thay đổi ảnh nền tại đây */
+            background-image: url('background.png'); 
+            background-attachment: fixed;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: cover;
+            display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;
+        }
+        .hero-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to bottom, rgba(48, 35, 29, 0.2), rgba(48, 35, 29, 0.85)); z-index: 1; }
+        
+        .hero-content { position: relative; z-index: 2; color: #FFF; display: flex; flex-direction: column; align-items: center;}
+        .hero-logo { width: 130px; height: 130px; object-fit: cover; border-radius: 50%; border: 4px solid rgba(255,255,255,0.9); margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.4); background-color: var(--card-bg); }
+        .hero-content h1 { font-family: var(--font-heading); font-size: 3.5rem; letter-spacing: 2px; margin-bottom: 15px; color: #f6f9d0; text-shadow: 2px 4px 10px rgba(0,0,0,0.5);}
+        .hero-content p { font-size: 1.2rem; color: #E8DFC8; font-style: italic; letter-spacing: 1px; font-family: var(--font-heading);}
+
+        /* --- 4. ANNOUNCEMENT BAR (SỰ KIỆN) --- */
+        #dynamicEventBanner {
+            background-color: var(--accent); color: rgb(5, 5, 5); padding: 12px 20px;
+            display: none; justify-content: center; align-items: center; gap: 15px;
+            box-shadow: 0 4px 10px rgba(200, 90, 50, 0.2); position: relative; z-index: 5;
+        }
+        .event-content { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; justify-content: center;}
+        .event-content h3 { color: #fa3c03; font-family: var(--font-body); font-size: 1rem; font-weight: 700; text-transform: uppercase; margin: 0; display: flex; align-items: center; gap: 8px;}
+        .event-badge { background: #FFF; color: var(--accent); padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 800; animation: pulseBadge 2s infinite; }
+        @keyframes pulseBadge { 0% { box-shadow: 0 0 0 0 rgba(255,255,255,0.7); } 70% { box-shadow: 0 0 0 6px rgba(255,255,255,0); } 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); } }
+        .event-content p { font-size: 0.95rem; font-weight: 500; margin: 0; }
+
+        /* --- 5. MASCOT CỤ RÙA (SỬA THÀNH ẢNH 3D) --- */
+        .turtle-wrapper {
+            position: fixed; z-index: 90;
+            width: 100px; height: 100px; margin-top: -50px; margin-left: -50px;
+            cursor: pointer; pointer-events: auto;
+        }
+        .turtle-rotator {
+            width: 100%; height: 100%;
+            display: flex; justify-content: center; align-items: center;
+            transition: transform 1s cubic-bezier(0.4, 0, 0.2, 1); /* Xoay đầu mượt mà */
+        }
+        .turtle-img {
+            width: 100%; height: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0px 15px 15px rgba(0,0,0,0.4));
+            transition: transform 0.4s ease, filter 0.4s ease;
+        }
+        
+        /* Bong bóng thoại */
+        .turtle-tooltip {
+            position: absolute; top: -50px; left: 50%; transform: translateX(-50%);
+            background: #FFF; border: 2px solid var(--primary); color: var(--primary);
+            padding: 8px 15px; border-radius: 20px; font-family: var(--font-heading); font-size: 0.85rem; font-weight: bold;
+            white-space: nowrap; opacity: 0; visibility: hidden; transition: 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            z-index: 10; pointer-events: none;
+        }
+        .turtle-tooltip::after { content: ''; position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); border-width: 8px 8px 0; border-style: solid; border-color: var(--primary) transparent transparent transparent; }
+        .turtle-wrapper:hover .turtle-tooltip { opacity: 1; visibility: visible; top: -65px; }
+
+        /* Trạng thái Hoảng sợ (Hover) - Rùa thu mình */
+        .turtle-wrapper.hiding .turtle-img { 
+            transform: scale(0.85); 
+            filter: drop-shadow(0px 5px 5px rgba(0,0,0,0.6)); 
+        }
+
+        /* --- 6. MAIN CONTAINER & PRODUCT GRID --- */
+        .container { max-width: 1300px; margin: 4rem auto 5rem; padding: 0 1.5rem; position: relative; z-index: 2;}
+        .section-header { text-align: center; margin-bottom: 3rem; }
+        .menu-title { font-family: var(--font-heading); font-size: 2.5rem; color: var(--primary); display: inline-block; position: relative; padding-bottom: 10px; }
+        .menu-title::after { content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 80px; height: 3px; background-color: var(--accent); border-radius: 2px; }
+        
+        .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 2rem; }
+        
+        /* PRODUCT CARD */
+        .product-card { background: var(--card-bg); border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 4px 15px rgba(48, 35, 29, 0.04); border: 1px solid rgba(232, 223, 200, 0.5); transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .product-card:hover { transform: translateY(-6px); box-shadow: 0 12px 24px rgba(48, 35, 29, 0.1); border-color: var(--border); }
+        .product-img-wrapper { width: 100%; height: 220px; overflow: hidden; background-color: #F4EFEB; display: flex; justify-content: center; align-items: center; }
+        .product-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; mix-blend-mode: multiply; }
+        .product-card:hover .product-img { transform: scale(1.05); }
+        
+        .product-info { padding: 1.5rem; display: flex; flex-direction: column; flex-grow: 1; }
+        .product-name { font-family: var(--font-heading); font-size: 1.25rem; font-weight: 700; color: var(--primary); margin-bottom: 0.5rem; }
+        .product-desc { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem; font-style: italic; line-height: 1.5; flex-grow: 1; }
+        .product-price { font-weight: 700; color: var(--accent); font-size: 1.2rem; margin-bottom: 0.5rem; }
+        .stock-tag { font-size: 0.8rem; font-weight: 600; margin-bottom: 1.2rem; display: inline-block; padding: 4px 10px; border-radius: 6px; background: #F8F5F0;}
         .stock-available { color: var(--green); }
-        .stock-out { color: var(--red); font-weight: 700; }
-        .btn-add { margin-top: auto; width: 100%; padding: 12px 10px; background-color: var(--primary); color: #fff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; transition: background 0.2s; text-transform: uppercase; font-size: 0.9rem; }
-        .btn-add:hover:not(:disabled) { background-color: var(--accent); }
-        .btn-add:disabled { background-color: #D3C9C1; color: #8C8077; cursor: not-allowed; }
-        .cart-box { background: var(--card-bg); border: 2px solid var(--border); border-radius: 12px; padding: 1.5rem; height: fit-content; position: sticky; top: 1rem; box-shadow: 0 4px 15px rgba(0,0,0,0.04); }
-        .cart-header { font-family: 'Merriweather', serif; font-size: 1.3rem; color: var(--primary); margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--border); }
-        .cart-items { max-height: 280px; overflow-y: auto; margin-bottom: 1rem; }
-        .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0; border-bottom: 1px dashed #EFE7DA; }
-        .cart-item-info h4 { font-size: 0.95rem; color: var(--primary); }
-        .cart-item-info span { font-size: 0.85rem; color: var(--text-muted); }
-        .cart-item-qty { display: flex; align-items: center; gap: 6px; }
-        .btn-qty { width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--border); background: #FAF5ED; cursor: pointer; font-weight: bold; }
-        .customer-info-box { background: #FAF5ED; padding: 15px; border-radius: 8px; margin-bottom: 1rem; border: 1px dashed var(--accent); }
-        .customer-info-box label { display: block; font-size: 0.85rem; font-weight: bold; color: var(--primary); margin-top: 5px; margin-bottom: 4px; }
-        .customer-info-box input, .customer-info-box select { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 6px; border: 1px solid var(--border); font-family: inherit; font-size: 0.95rem; }
+        .stock-out { color: var(--red); background: #FFEBEE; }
+        
+        .btn-add { margin-top: auto; width: 100%; padding: 14px 10px; background-color: var(--primary); color: #fff; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; transition: 0.3s; text-transform: uppercase; font-size: 0.9rem; letter-spacing: 0.5px; }
+        .btn-add:hover:not(:disabled) { background-color: var(--accent); box-shadow: 0 4px 10px rgba(200, 90, 50, 0.3); }
+        .btn-add:disabled { background-color: #E0D8D0; color: #A09388; cursor: not-allowed; }
+
+        /* --- 7. GIỎ HÀNG NGĂN KÉO & ICON NỔI --- */
+        .floating-cart-btn { position: fixed; bottom: 30px; right: 30px; width: 65px; height: 65px; background-color: var(--accent); color: white; border: none; border-radius: 50%; font-size: 1.5rem; cursor: pointer; box-shadow: 0 6px 20px rgba(200, 90, 50, 0.4); display: flex; justify-content: center; align-items: center; z-index: 99; transition: transform 0.2s; }
+        .floating-cart-btn:hover { transform: scale(1.1); background-color: var(--accent-hover); }
+        .cart-badge { position: absolute; top: 0; right: 0; background: var(--red); color: white; font-size: 0.8rem; font-weight: bold; width: 24px; height: 24px; border-radius: 50%; display: flex; justify-content: center; align-items: center; border: 2px solid #FFF; }
+        .cart-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(48, 35, 29, 0.6); backdrop-filter: blur(2px); z-index: 100; display: none; opacity: 0; transition: opacity 0.3s; }
+        .cart-overlay.active { display: block; opacity: 1; }
+        .cart-sidebar { position: fixed; top: 0; right: -450px; width: 400px; max-width: 100%; height: 100vh; background: var(--bg-color); z-index: 101; box-shadow: -5px 0 25px rgba(0,0,0,0.15); transition: right 0.3s ease-in-out; display: flex; flex-direction: column; }
+        .cart-sidebar.open { right: 0; }
+        .cart-header { padding: 1.5rem; background: #FFF; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+        .cart-header h3 { font-family: var(--font-heading); color: var(--primary); font-size: 1.3rem; margin: 0;}
+        .close-cart-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted); }
+        .cart-body { padding: 1.5rem; flex-grow: 1; overflow-y: auto; }
+        .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 1rem; background: #FFF; border-radius: 12px; margin-bottom: 10px; border: 1px solid var(--border); }
+        .cart-item-info h4 { font-size: 1rem; color: var(--primary); font-family: var(--font-heading); margin-bottom: 4px;}
+        .cart-item-info span { font-size: 0.9rem; color: var(--accent); font-weight: 600;}
+        .cart-item-qty { display: flex; align-items: center; gap: 10px; background: var(--bg-color); padding: 4px; border-radius: 20px;}
+        .btn-qty { width: 28px; height: 28px; border-radius: 50%; border: none; background: #FFF; cursor: pointer; font-weight: bold; color: var(--primary); box-shadow: 0 2px 5px rgba(0,0,0,0.05);}
+        .customer-info-box { background: #FFF; padding: 15px; border-radius: 12px; margin-bottom: 1rem; border: 1px solid var(--border); }
+        .customer-info-box label { display: block; font-size: 0.85rem; font-weight: 700; color: var(--primary); margin-top: 10px; margin-bottom: 5px; }
+        .customer-info-box input, .customer-info-box select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #DCD1C4; font-family: inherit; font-size: 0.95rem; background: var(--bg-color);}
         .customer-info-box input:focus { outline: 2px solid var(--accent); border-color: transparent;}
-        .cart-total { border-top: 2px solid var(--border); padding-top: 1rem; display: flex; justify-content: space-between; font-size: 1.2rem; font-weight: 700; color: var(--accent); margin-bottom: 1.2rem; }
-        .btn-checkout { width: 100%; padding: 14px; background-color: var(--accent); color: white; border: none; border-radius: 8px; font-size: 1.05rem; font-weight: 700; cursor: pointer; box-shadow: 0 4px 10px rgba(200, 90, 50, 0.3); transition: background 0.2s; }
-        .btn-checkout:hover:not(:disabled) { background-color: var(--accent-hover); }
+        .cart-footer { padding: 1.5rem; background: #FFF; border-top: 1px solid var(--border); box-shadow: 0 -4px 15px rgba(0,0,0,0.02);}
+        .cart-total { display: flex; justify-content: space-between; font-size: 1.3rem; font-weight: 700; color: var(--primary); margin-bottom: 1rem; }
+        .btn-checkout { width: 100%; padding: 16px; background-color: var(--accent); color: white; border: none; border-radius: 12px; font-size: 1.1rem; font-weight: 700; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 15px rgba(200, 90, 50, 0.2);}
+        .btn-checkout:hover:not(:disabled) { background-color: var(--accent-hover); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(200, 90, 50, 0.3);}
         .btn-checkout:disabled { background-color: #D3C9C1; box-shadow: none; cursor: not-allowed; }
-        .empty-cart-msg { text-align: center; color: var(--text-muted); padding: 2rem 0; font-style: italic; }
+        .empty-cart-msg { text-align: center; color: var(--text-muted); padding: 3rem 0; font-style: italic; }
+
+        @media (max-width: 768px) {
+            .top-nav { padding: 1rem; flex-direction: column; gap: 10px;}
+            .hero-content h1 { font-size: 2.5rem; }
+            .cart-sidebar { width: 100%; right: -100%; }
+        }
     </style>
 </head>
 <body>
-    <header>
-        <img src="logo.jpg" alt="Mê Đá Logo" class="logo" onerror="this.src='https://via.placeholder.com/90'">
-        <h1>MÊ ĐÁ</h1>
-        <p>Chúng tôi không bán nước, chúng tôi bán câu chuyện</p>
-        <div class="top-links">
-            <a href="donhang.html" class="nav-link" style="background-color: var(--green); border-color: var(--green);">👨‍🍳 Quầy Bếp</a>
-            <a href="admin.html" class="nav-link">⚙️ Admin</a>
-        </div>
-    </header>
+    <!-- HIỆU ỨNG MÔI TRƯỜNG: Noise Film & Lá Rơi -->
+    <div class="film-grain"></div>
+    <div class="falling-leaves" id="leavesContainer"></div>
 
+    <!-- RỒNG & CHIM LẠC BAY NGANG TRỜI -->
+    <!-- Bạn nhớ chuẩn bị 2 file rong-3d.gif và chimlac-3d.gif lưu cùng thư mục nhé -->
+    <img src="rong-3d.gif" alt="Rồng thần" class="mythical-creature dragon-3d" onerror="this.style.display='none'">
+    <img src="chimlac-3d.gif" alt="Chim Lạc" class="mythical-creature chimlac-3d" onerror="this.style.display='none'">
+
+    <!-- 1. Thanh điều hướng -->
+    <nav class="top-nav">
+        <div class="nav-brand">MÊ ĐÁ</div>
+        <div class="nav-links">
+            <a href="donhang.html" class="nav-link">👨‍🍳 Quầy Bếp</a>
+            <a href="admin.html" class="nav-link">⚙️ Quản Trị</a>
+        </div>
+    </nav>
+
+    <!-- 2. Parallax Hero Banner -->
+    <section class="hero-banner">
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+            <img src="logo.jpg" alt="Mê Đá Logo" class="hero-logo" onerror="this.src='https://via.placeholder.com/130?text=Mê+Đá'">
+            <h1>MÊ ĐÁ</h1>
+            <p>Healing giữa thế giới xô bồ</p>
+        </div>
+    </section>
+
+    <!-- Thanh thông báo ngang -->
     <div id="dynamicEventBanner">
         <div class="event-content">
-            <h3><span id="evTitleRender">Sự Kiện</span> <span class="event-badge">HOT</span></h3>
+            <h3><span class="event-badge">HOT</span> <span id="evTitleRender">Sự Kiện</span></h3>
             <p id="evDescRender">Nội dung</p>
         </div>
-        <div><span style="font-size: 2rem;">🎁☕</span></div>
     </div>
 
+    <!-- 3. Mascot Cụ Rùa 3D (Đã thay bằng thẻ img để chèn ảnh 3D) -->
+    <!-- Bạn cần lưu file ảnh rua-3d.gif (nền trong suốt) vào cùng thư mục để hiển thị -->
+    <div class="turtle-wrapper" id="roamingTurtle">
+        <div class="turtle-tooltip" id="turtleTooltip">Chậm lại một chút... Thưởng thức Mê Đá 🐢</div>
+        <div class="turtle-rotator" id="turtleRotator">
+            <img src="rua-3d.gif" alt="Rùa 3D" class="turtle-img" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2821/2821868.png'"> <!-- Dùng ảnh icon tạm nếu không có file -->
+        </div>
+    </div>
+
+    <!-- Khu vực Menu chính -->
     <div class="container">
-        <div>
-            <h2 class="menu-title">☕ Thực Đơn Đồ Uống</h2>
-            <div id="productsGrid" class="products-grid">
-                <div style="text-align: center; color: #888; grid-column: 1/-1;">Đang tải menu từ Đám mây... ⏳</div>
-            </div>
+        <div class="section-header">
+            <h2 class="menu-title">Câu Chuyện Đồ Uống</h2>
         </div>
-
-        <div>
-            <div class="cart-box">
-                <h3 class="cart-header">🛒 Giỏ Hàng</h3>
-                <div id="cartItems" class="cart-items"></div>
-                
-                <div class="customer-info-box" id="customerInfoBox" style="display: none;">
-                    <label for="custName">Tên của bạn:</label>
-                    <input type="text" id="custName" placeholder="Nhập tên của bạn" required>
-                    <label for="orderType">Hình thức sử dụng:</label>
-                    <select id="orderType">
-                        <option value="Tại chỗ">Dùng tại chỗ</option>
-                        <option value="Mang về">Take away</option>
-                    </select>
-                </div>
-
-                <div class="cart-total">
-                    <span>Tổng tiền:</span>
-                    <span id="cartTotal">0 VNĐ</span>
-                </div>
-                
-                <button id="btnCheckout" class="btn-checkout" onclick="proceedToCheckout()" disabled>
-                    Thanh Toán Qua QR
-                </button>
-            </div>
+        <div id="productsGrid" class="products-grid">
+            <div style="text-align: center; color: #888; grid-column: 1/-1;">Đang nạp menu từ Đám mây... ⏳</div>
         </div>
     </div>
 
-    <!-- TÍCH HỢP FIREBASE (Dạng Module chuẩn) -->
+    <!-- HIỆU ỨNG SÓNG BIỂN CUỘN LIÊN TỤC -->
+    <div class="ocean-waves">
+        <svg class="waves-svg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 24 150 28" preserveAspectRatio="none" shape-rendering="auto">
+            <defs>
+                <path id="gentle-wave" d="M-160 44c30 0 58-18 88-18s 58 18 88 18 58-18 88-18 58 18 88 18 v44h-352z" />
+            </defs>
+            <g class="parallax">
+                <use xlink:href="#gentle-wave" x="48" y="0" fill="rgba(48, 115, 175, 0.7)" />
+                <use xlink:href="#gentle-wave" x="48" y="3" fill="rgba(48, 115, 175, 0.5)" />
+                <use xlink:href="#gentle-wave" x="48" y="5" fill="rgba(48, 115, 175, 0.3)" />
+                <use xlink:href="#gentle-wave" x="48" y="7" fill="#1C4B70" /> <!-- Màu biển phù hợp với theme cafe -->
+            </g>
+        </svg>
+    </div>
+
+    <!-- Nút gọi Giỏ hàng nổi -->
+    <button class="floating-cart-btn" onclick="window.toggleCart()">
+        🛒
+        <span id="cartBadgeCount" class="cart-badge">0</span>
+    </button>
+
+    <!-- Sidebar Giỏ hàng (Ngăn kéo) -->
+    <div class="cart-overlay" id="cartOverlay" onclick="window.toggleCart()"></div>
+    <div class="cart-sidebar" id="cartSidebar">
+        <div class="cart-header">
+            <h3>Giỏ Hàng Của Bạn</h3>
+            <button class="close-cart-btn" onclick="window.toggleCart()">✕</button>
+        </div>
+        <div class="cart-body">
+            <div id="cartItems"><div class="empty-cart-msg">Giỏ hàng đang trống. Hãy chọn một câu chuyện nhé!</div></div>
+            <div class="customer-info-box" id="customerInfoBox" style="display: none;">
+                <label for="custName">Tên của bạn:</label>
+                <input type="text" id="custName" placeholder="Nhập tên của bạn: " required>
+                <label for="orderType">Hình thức sử dụng:</label>
+                <select id="orderType">
+                    <option value="Tại chỗ">Dùng tại chỗ</option>
+                    <option value="Mang về">Take away</option>
+                </select>
+            </div>
+        </div>
+        <div class="cart-footer">
+            <div class="cart-total"><span>Tổng tiền:</span><span id="cartTotal">0 VNĐ</span></div>
+            <button id="btnCheckout" class="btn-checkout" onclick="window.proceedToCheckout()" disabled>Thanh Toán Qua QR</button>
+        </div>
+    </div>
+
+    <!-- SCRIPT TẠO LÁ RƠI VÀ RÙA ĐI DẠO -->
+    <script>
+        // 1. Tạo lá rơi
+        const leavesContainer = document.getElementById('leavesContainer');
+        const numLeaves = 20;
+        for(let i=0; i<numLeaves; i++) {
+            let leaf = document.createElement('div');
+            leaf.className = 'leaf';
+            leaf.style.left = Math.random() * 100 + 'vw';
+            leaf.style.animationDuration = (Math.random() * 8 + 6) + 's';
+            leaf.style.animationDelay = Math.random() * 5 + 's';
+            leavesContainer.appendChild(leaf);
+        }
+
+        // 2. Logic điều khiển Rùa bò khắp màn hình (Nâng cấp)
+        const turtleWrapper = document.getElementById('roamingTurtle');
+        const turtleRotator = document.getElementById('turtleRotator');
+        
+        let currentX = -100; // Xuất phát từ ngoài màn hình bên trái
+        let currentY = window.innerHeight / 2;
+        let currentAngle = 90; 
+        let isHiding = false;
+
+        turtleWrapper.style.transform = `translate(${currentX}px, ${currentY}px)`;
+
+        function moveTurtle() {
+            if (isHiding) {
+                setTimeout(moveTurtle, 1000);
+                return;
+            }
+
+            const margin = 100;
+            const targetX = margin + Math.random() * (window.innerWidth - margin * 2);
+            const targetY = margin + Math.random() * (window.innerHeight - margin * 2);
+
+            const dx = targetX - currentX;
+            const dy = targetY - currentY;
+            const distance = Math.sqrt(dx*dx + dy*dy);
+            
+            const speed = 25 + Math.random() * 20; // Tốc độ rùa
+            const duration = distance / speed;
+
+            // Tính góc xoay đầu (bù thêm 90 độ vì ảnh mặc định thường quay lên trên)
+            let angle = Math.atan2(dy, dx) * (180 / Math.PI) + 90;
+            
+            // Logic quay đầu con rùa mượt nhất
+            let diff = angle - currentAngle;
+            diff = ((diff + 180) % 360 + 360) % 360 - 180;
+            currentAngle += diff;
+
+            // Xoay đầu rùa xong mới bắt đầu di chuyển
+            turtleRotator.style.transform = `rotate(${currentAngle}deg)`;
+            
+            setTimeout(() => {
+                turtleWrapper.style.transition = `transform ${duration}s linear`;
+                turtleWrapper.style.transform = `translate(${targetX}px, ${targetY}px)`;
+                currentX = targetX;
+                currentY = targetY;
+            }, 500); // Đợi nửa giây cho rùa quay đầu rồi đi
+
+            setTimeout(moveTurtle, (duration * 1000) + 1500 + Math.random() * 2500);
+        }
+
+        turtleWrapper.addEventListener('mouseenter', () => {
+            isHiding = true;
+            turtleWrapper.classList.add('hiding');
+        });
+        turtleWrapper.addEventListener('mouseleave', () => {
+            isHiding = false;
+            turtleWrapper.classList.remove('hiding');
+        });
+
+        setTimeout(moveTurtle, 1000);
+    </script>
+
+    <!-- TÍCH HỢP FIREBASE (TẢI SONG SONG - GIỮ NGUYÊN) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
         import { getFirestore, collection, getDocs, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
-        // CẤU HÌNH CỦA BẠN
         const firebaseConfig = {
             apiKey: "AIzaSyAtZN8CGdH0M-OTs9Z2gGCsiA2AWJ0WRXg",
             authDomain: "meda-e0955.firebaseapp.com",
@@ -136,63 +440,46 @@
         let globalProducts = [];
         let globalInventory = [];
 
-        // Data mặc định (Sẽ tự động đẩy lên Firebase nếu Firebase đang trống)
         const defaultInventory = [
             { id: 'ing1', name: 'Hạt Cà Phê Mê Đá', quantity: 2000, unit: 'g' },
-            { id: 'ing2', name: 'Sữa Đặc Ong Thọ', quantity: 1500, unit: 'ml' },
-            { id: 'ing3', name: 'Sữa Tươi Không Đường', quantity: 3000, unit: 'ml' },
-            { id: 'ing4', name: 'Trà Cốt Lọc', quantity: 1000, unit: 'ml' }
+            { id: 'ing2', name: 'Sữa Đặc Ong Thọ', quantity: 1500, unit: 'ml' }
         ];
 
         const defaultProducts = [
             { id: 'p1', name: 'Cà Phê Đen Đá', price: 25000, description: 'Đậm đà, chuẩn vị phin Việt Nam truyền thống.', image: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=500&q=80', recipe: [{ ingId: 'ing1', amount: 25 }] },
-            { id: 'p2', name: 'Cà Phê Sữa Đá', price: 29000, description: 'Sự kết hợp hoàn hảo giữa vị đắng của cà phê và vị ngọt béo của sữa đặc.', image: 'https://images.unsplash.com/photo-1541167760496-1628856ab772?auto=format&fit=crop&w=500&q=80', recipe: [{ ingId: 'ing1', amount: 25 }, { ingId: 'ing2', amount: 30 }] },
-            { id: 'p3', name: 'Bạc Xỉu Mê Đá', price: 32000, description: 'Nhiều sữa, ít cà phê. Ngọt ngào, béo ngậy.', image: 'https://images.unsplash.com/photo-1572442388796-11668a67e53d?auto=format&fit=crop&w=500&q=80', recipe: [{ ingId: 'ing1', amount: 15 }, { ingId: 'ing2', amount: 40 }, { ingId: 'ing3', amount: 80 }] }
+            { id: 'p2', name: 'Cà Phê Sữa Đá', price: 29000, description: 'Sự kết hợp hoàn hảo giữa vị đắng và ngọt béo.', image: 'https://images.unsplash.com/photo-1541167760496-1628856ab772?auto=format&fit=crop&w=500&q=80', recipe: [{ ingId: 'ing1', amount: 25 }, { ingId: 'ing2', amount: 30 }] }
         ];
 
-        // TẢI DỮ LIỆU TỪ ĐÁM MÂY (PHIÊN BẢN TẢI SONG SONG SIÊU TỐC)
         async function loadDataFromCloud() {
             try {
-                // Tải cùng lúc: Sự kiện, Kho nguyên liệu, và Menu đồ uống
                 const [eventSnap, invSnap, prodSnap] = await Promise.all([
                     getDoc(doc(db, "config", "event")),
                     getDocs(collection(db, "inventory")),
                     getDocs(collection(db, "products"))
                 ]);
 
-                // 1. Xử lý sự kiện
                 if (eventSnap.exists()) {
                     const config = eventSnap.data();
                     const bannerEl = document.getElementById('dynamicEventBanner');
                     if (config.isActive) {
                         document.getElementById('evTitleRender').textContent = config.title || 'Sự Kiện';
                         document.getElementById('evDescRender').textContent = config.desc || '';
-                        bannerEl.style.backgroundColor = config.bgColor || '#FFEBE6';
+                        bannerEl.style.backgroundColor = config.bgColor === '#FFEBE6' ? 'var(--accent)' : config.bgColor;
                         bannerEl.style.display = 'flex';
                     }
                 }
 
-                // 2. Xử lý Kho nguyên liệu (Nếu trống thì nạp mặc định)
                 if (invSnap.empty) {
                     for (let item of defaultInventory) await setDoc(doc(db, "inventory", item.id), item);
                     globalInventory = defaultInventory;
-                } else {
-                    globalInventory = invSnap.docs.map(d => d.data());
-                }
+                } else { globalInventory = invSnap.docs.map(d => d.data()); }
 
-                // 3. Xử lý Menu sản phẩm (Nếu trống thì nạp mặc định)
                 if (prodSnap.empty) {
                     for (let p of defaultProducts) await setDoc(doc(db, "products", p.id), p);
                     globalProducts = defaultProducts;
-                } else {
-                    globalProducts = prodSnap.docs.map(d => {
-                        let data = d.data(); data.id = d.id; return data;
-                    });
-                }
+                } else { globalProducts = prodSnap.docs.map(d => { let data = d.data(); data.id = d.id; return data; }); }
                 
-                // Hiển thị ra màn hình
-                renderMenu();
-                updateCartUI();
+                renderMenu(); updateCartUI();
             } catch (error) {
                 console.error("Lỗi tải dữ liệu:", error);
                 document.getElementById('productsGrid').innerHTML = '<div style="color:red; grid-column: 1/-1;">Lỗi kết nối Đám mây. Vui lòng tải lại trang.</div>';
@@ -212,103 +499,78 @@
         }
 
         function renderMenu() {
-            const grid = document.getElementById('productsGrid');
-            grid.innerHTML = '';
+            const grid = document.getElementById('productsGrid'); grid.innerHTML = '';
             globalProducts.forEach(p => {
                 const maxCups = calculateMaxCups(p, globalInventory);
                 const inCart = cart.find(ci => ci.id === p.id);
                 const cartQty = inCart ? inCart.quantity : 0;
                 const availableCups = maxCups - cartQty;
                 const isOut = availableCups <= 0;
-                const descText = p.description ? p.description : 'Tuyệt phẩm từ Mê Đá.';
 
                 grid.innerHTML += `
                     <div class="product-card">
-                        <img src="${p.image}" class="product-img" onerror="this.src='https://via.placeholder.com/300x200?text=Me+Da+Coffee'">
+                        <div class="product-img-wrapper"><img src="${p.image}" class="product-img" onerror="this.src='https://via.placeholder.com/400x300?text=Me+Da+Coffee'"></div>
                         <div class="product-info">
-                            <div class="product-name">${p.name}</div>
-                            <div class="product-desc">"${descText}"</div>
-                            <div class="product-price">${p.price.toLocaleString('vi-VN')} VNĐ</div>
-                            <div class="stock-tag ${isOut ? 'stock-out' : 'stock-available'}">
-                                ${isOut ? '❌ Hết nguyên liệu' : `✔ Có thể pha: ${availableCups} ly`}
-                            </div>
-                            <button class="btn-add" ${isOut ? 'disabled' : ''} onclick="window.addToCart('${p.id}')">
-                                ${isOut ? 'Tạm Hết Món' : 'Thêm Vào Giỏ'}
-                            </button>
+                            <div class="product-name">${p.name}</div><div class="product-desc">"${p.description||''}"</div>
+                            <div class="product-price">${p.price.toLocaleString('vi-VN')} đ</div>
+                            <div class="stock-tag ${isOut ? 'stock-out' : 'stock-available'}">${isOut ? 'Tạm hết nguyên liệu' : `Có thể pha: ${availableCups} ly`}</div>
+                            <button class="btn-add" ${isOut ? 'disabled' : ''} onclick="window.addToCart('${p.id}')">${isOut ? 'Tạm Hết Món' : 'Thêm Vào Giỏ'}</button>
                         </div>
-                    </div>
-                `;
+                    </div>`;
             });
+        }
+
+        window.toggleCart = function() {
+            document.getElementById('cartSidebar').classList.toggle('open');
+            document.getElementById('cartOverlay').classList.toggle('active');
         }
 
         window.addToCart = function(productId) {
-            const product = globalProducts.find(p => p.id === productId);
-            if (!product) return;
+            const product = globalProducts.find(p => p.id === productId); if (!product) return;
             const existing = cart.find(item => item.id === productId);
-            if (existing) { existing.quantity++; } else { cart.push({ ...product, quantity: 1 }); }
+            if (existing) existing.quantity++; else cart.push({ ...product, quantity: 1 });
             updateCartUI(); renderMenu();
+            if(!document.getElementById('cartSidebar').classList.contains('open')) window.toggleCart();
         }
 
         window.changeQuantity = function(productId, delta) {
-            const item = cart.find(i => i.id === productId);
-            if (!item) return;
-            item.quantity += delta;
-            if (item.quantity <= 0) cart = cart.filter(i => i.id !== productId);
+            const item = cart.find(i => i.id === productId); if (!item) return;
+            item.quantity += delta; if (item.quantity <= 0) cart = cart.filter(i => i.id !== productId);
             updateCartUI(); renderMenu();
+            if (cart.length === 0) setTimeout(window.toggleCart, 500);
         }
 
         function updateCartUI() {
-            const container = document.getElementById('cartItems');
-            const totalEl = document.getElementById('cartTotal');
-            const btnCheckout = document.getElementById('btnCheckout');
-            const infoBox = document.getElementById('customerInfoBox');
+            const container = document.getElementById('cartItems'); const totalEl = document.getElementById('cartTotal'); const btnCheckout = document.getElementById('btnCheckout'); const infoBox = document.getElementById('customerInfoBox');
+            document.getElementById('cartBadgeCount').textContent = cart.reduce((sum, item) => sum + item.quantity, 0);
 
             if (cart.length === 0) {
-                container.innerHTML = '<div class="empty-cart-msg">Giỏ hàng đang trống</div>';
-                totalEl.textContent = '0 VNĐ'; btnCheckout.disabled = true; infoBox.style.display = 'none'; return;
+                container.innerHTML = '<div class="empty-cart-msg">Giỏ hàng đang trống. Hãy chọn một câu chuyện nhé!</div>';
+                totalEl.textContent = '0 đ'; btnCheckout.disabled = true; infoBox.style.display = 'none'; return;
             }
 
-            container.innerHTML = '';
-            let total = 0;
+            container.innerHTML = ''; let total = 0;
             cart.forEach(item => {
                 total += item.price * item.quantity;
-                container.innerHTML += `
-                    <div class="cart-item">
-                        <div class="cart-item-info"><h4>${item.name}</h4><span>${item.price.toLocaleString('vi-VN')} VNĐ x ${item.quantity}</span></div>
-                        <div class="cart-item-qty">
-                            <button class="btn-qty" onclick="window.changeQuantity('${item.id}', -1)">-</button>
-                            <span>${item.quantity}</span>
-                            <button class="btn-qty" onclick="window.changeQuantity('${item.id}', 1)">+</button>
-                        </div>
-                    </div>
-                `;
+                container.innerHTML += `<div class="cart-item">
+                    <div class="cart-item-info"><h4>${item.name}</h4><span>${item.price.toLocaleString('vi-VN')} đ</span></div>
+                    <div class="cart-item-qty"><button class="btn-qty" onclick="window.changeQuantity('${item.id}', -1)">-</button><span style="font-weight:bold;">${item.quantity}</span><button class="btn-qty" onclick="window.changeQuantity('${item.id}', 1)">+</button></div>
+                </div>`;
             });
-
-            totalEl.textContent = total.toLocaleString('vi-VN') + ' VNĐ';
-            btnCheckout.disabled = false; infoBox.style.display = 'block';
+            totalEl.textContent = total.toLocaleString('vi-VN') + ' đ'; btnCheckout.disabled = false; infoBox.style.display = 'block';
         }
 
         window.proceedToCheckout = function() {
             if (cart.length === 0) return;
-            const custNameInput = document.getElementById('custName');
-            const custName = custNameInput.value.trim();
-            if (!custName) { alert("Vui lòng nhập tên của bạn để quán gọi khi nước pha xong nhé!"); custNameInput.focus(); return; }
-
-            const pendingOrder = {
-                orderId: 'MD' + Math.floor(100000 + Math.random() * 900000),
-                customerName: custName,
-                orderType: document.getElementById('orderType').value,
-                items: cart,
-                total: cart.reduce((sum, i) => sum + i.price * i.quantity, 0),
-                createdAt: new Date().toLocaleString('vi-VN')
-            };
-            
-            // Giữ tạm ở máy để sang trang thanh toán xử lý tiếp lên mây
-            localStorage.setItem('meda_pending_order', JSON.stringify(pendingOrder));
+            const custName = document.getElementById('custName').value.trim();
+            if (!custName) { alert("Vui lòng cho quán biết tên để gọi khi nước đã pha xong nhé!"); document.getElementById('custName').focus(); return; }
+            localStorage.setItem('meda_pending_order', JSON.stringify({
+                orderId: 'MD' + Math.floor(100000 + Math.random() * 900000), customerName: custName, orderType: document.getElementById('orderType').value,
+                items: cart, total: cart.reduce((sum, i) => sum + i.price * i.quantity, 0), createdAt: new Date().toLocaleString('vi-VN')
+            }));
             window.location.href = 'checkout.html';
         }
 
-        // Bắt đầu nạp dữ liệu ngay khi vào trang
         loadDataFromCloud();
     </script>
 </body>
