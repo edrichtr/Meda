@@ -6,11 +6,11 @@
     <title>Quản Lý Đơn Hàng - Mê Đá</title>
     <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        :root { --bg-color: #FBF6EE; --card-bg: #FFFDF9; --primary: #3D2B1F; --accent: #C85A32; --border: #E8DFC8; --green: #2E7D32; --amber: #EF6C00; }
+        :root { --bg-color: #FBF6EE; --card-bg: #FFFDF9; --primary: #3D2B1F; --accent: #C85A32; --border: #E8DFC8; --green: #2E7D32; --amber: #EF6C00; --zalo: #0068FF; --red: #C62828; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg-color); color: #2B1E16; }
         
-        header { background-color: var(--primary); color: #FAF4EB; padding: 1.2rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+        header { background-color: var(--primary); color: #FAF4EB; padding: 1.2rem 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
         header h1 { font-family: 'Merriweather', serif; font-size: 1.5rem; }
         .btn-header { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 6px 14px; border-radius: 6px; cursor: pointer; text-decoration: none; font-weight: 600;}
         .btn-header:hover { background: rgba(255,255,255,0.3); }
@@ -91,8 +91,9 @@
 
     <header>
         <h1>👨‍🍳 Quầy Pha Chế <span style="font-size: 0.8rem; background: var(--green); padding: 2px 6px; border-radius: 8px;">LIVE</span></h1>
-        <div style="display: flex; gap: 10px;">
-            <a href="index.html" class="btn-header" style="background: var(--blue); border-color: var(--blue);">🛒 Trang Đặt Hàng</a>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button class="btn-header" style="background: var(--red); border-color: var(--red);" onclick="window.staffPushZaloAlert()">⚠️ Báo Hết NL / Chốt Ca Về Zalo</button>
+            <a href="index.html" class="btn-header" style="background: var(--zalo); border-color: var(--zalo);">🛒 Trang Đặt Hàng</a>
             <button class="btn-header" onclick="window.logoutStaff()">Đăng Xuất</button>
         </div>
     </header>
@@ -105,10 +106,10 @@
         <div id="completedOrdersContainer" class="orders-grid"></div>
     </div>
 
-    <!-- TÍCH HỢP FIREBASE REALTIME -->
+    <!-- TÍCH HỢP FIREBASE REALTIME & NÚT BÁO ZALO NHANH TỪ BẾP -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
-        import { getFirestore, collection, query, orderBy, onSnapshot, doc, updateDoc, limit } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+        import { getFirestore, collection, query, orderBy, onSnapshot, getDocs, doc, getDoc, updateDoc, limit } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAtZN8CGdH0M-OTs9Z2gGCsiA2AWJ0WRXg",
@@ -122,7 +123,6 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // -- BẢO MẬT & ĐĂNG NHẬP --
         if (sessionStorage.getItem('meda_staff_logged_in') === 'true') {
             document.getElementById('loginOverlay').style.display = 'none';
             startListeningOrders();
@@ -155,12 +155,8 @@
             } else { alert("Tên đăng nhập hoặc Mã khôi phục không chính xác!"); }
         }
 
-        // -- LẮNG NGHE ĐƠN HÀNG REALTIME TỪ ĐÁM MÂY --
         function startListeningOrders() {
-            // Lấy 50 đơn hàng mới nhất
             const q = query(collection(db, "orders"), orderBy("timestamp", "desc"), limit(50));
-            
-            // onSnapshot: Kích hoạt ngay lập tức khi trên Cloud có đơn hàng mới (Hoặc có ai đó thay đổi trạng thái)
             onSnapshot(q, (snapshot) => {
                 const pendingContainer = document.getElementById('pendingOrdersContainer');
                 const completedContainer = document.getElementById('completedOrdersContainer');
@@ -202,11 +198,105 @@
             });
         }
 
-        // Bấm hoàn thành thì đổi trạng thái trên Đám mây
         window.markAsDone = async function(dbId) {
             try {
                 await updateDoc(doc(db, "orders", dbId), { status: "Hoàn thành" });
             } catch(e) { alert("Lỗi khi cập nhật trạng thái đơn!"); }
+        }
+
+        // Nút cho nhân viên bếp đẩy nhanh báo cáo Hết nguyên liệu / Hết món / Doanh thu ca về Zalo chủ quán
+        window.staffPushZaloAlert = async function() {
+            try {
+                const [zaloSnap, invSnap, prodSnap, ordersSnap] = await Promise.all([
+                    getDoc(doc(db, "config", "zalo")),
+                    getDocs(collection(db, "inventory")),
+                    getDocs(collection(db, "products")),
+                    getDocs(collection(db, "orders"))
+                ]);
+
+                const inventory = invSnap.docs.map(d => d.data());
+                const products = prodSnap.docs.map(d => ({ ...d.data(), id: d.id }));
+                const allOrders = ordersSnap.docs.map(d => d.data());
+
+                const outIngs = inventory.filter(i => i.quantity <= 0).map(i => `- ❌ ${i.name}: HẾT SẠCH (0 ${i.unit})`);
+                const lowIngs = inventory.filter(i => i.quantity > 0 && i.quantity <= 50).map(i => `- ⚠️ ${i.name}: Sắp hết (${i.quantity} ${i.unit})`);
+
+                const outProds = [];
+                products.forEach(p => {
+                    let maxCups = Infinity;
+                    if (!p.recipe || p.recipe.length === 0) maxCups = 999;
+                    else {
+                        p.recipe.forEach(ri => {
+                            const inv = inventory.find(i => i.id === ri.ingId);
+                            if (!inv || inv.quantity < ri.amount) maxCups = 0;
+                            else maxCups = Math.min(maxCups, Math.floor(inv.quantity / ri.amount));
+                        });
+                    }
+                    if (maxCups === 0 || maxCups === Infinity) outProds.push(`- 🚫 ${p.name}: HẾT MÓN (0 ly)`);
+                });
+
+                const now = new Date();
+                const todayStr = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()}`;
+                const todayOrders = allOrders.filter(o => o.createdAt && o.createdAt.includes(todayStr));
+
+                let dailyRev = 0; let dailyCups = 0;
+                const soldMap = {};
+                todayOrders.forEach(o => {
+                    dailyRev += (o.total || 0);
+                    if (o.items && Array.isArray(o.items)) {
+                        o.items.forEach(it => {
+                            const k = it.id || it.name;
+                            if (!soldMap[k]) soldMap[k] = { name: it.name, qty: 0, rev: 0 };
+                            soldMap[k].qty += it.quantity;
+                            soldMap[k].rev += (it.price * it.quantity);
+                            dailyCups += it.quantity;
+                        });
+                    }
+                });
+
+                const soldLines = Object.values(soldMap).map(s => `• ${s.name}: ${s.qty} ly (${s.rev.toLocaleString('vi-VN')}đ)`).join('\n') || '- Chưa bán ly nào';
+
+                const msg = [
+                    `👨‍🍳 [QUẦY BẾP MÊ ĐÁ] BÁO CÁO KHO & CHỐT CA (${todayStr})`,
+                    `🕒 Lúc: ${now.toLocaleTimeString('vi-VN')}`,
+                    `========================`,
+                    `⚠️ 1. NGUYÊN LIỆU & MÓN HẾT:`,
+                    ...(outIngs.length || lowIngs.length || outProds.length ? [...outIngs, ...lowIngs, ...outProds] : [`✅ Nguyên liệu & các món đều còn đủ.`]),
+                    `========================`,
+                    `💰 2. DOANH THU & MÓN BÁN TRONG NGÀY:`,
+                    `• Tổng thu hôm nay: ${dailyRev.toLocaleString('vi-VN')} VNĐ (${todayOrders.length} đơn - ${dailyCups} ly)`,
+                    `• Chi tiết các món đã bán:\n${soldLines}`
+                ].join('\n');
+
+                navigator.clipboard.writeText(msg).catch(() => {});
+
+                const zaloCfg = zaloSnap.exists() ? zaloSnap.data() : null;
+                if (zaloCfg && (zaloCfg.mode === 'zalo_bot' || !zaloCfg.mode) && zaloCfg.botToken && zaloCfg.botChatId) {
+                    const targetUrl = `https://bot-api.zapps.me/bot${zaloCfg.botToken}/sendMessage`;
+                    const formBody = new URLSearchParams();
+                    formBody.append('chat_id', zaloCfg.botChatId);
+                    formBody.append('text', msg);
+                    await fetch(targetUrl, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: formBody.toString()
+                    });
+                    alert("✅ Đã đẩy báo cáo từ Quầy Bếp về Bot MÊ ĐÁ Assistant trên Zalo!");
+                } else if (zaloCfg && zaloCfg.mode === 'webhook' && zaloCfg.webhookUrl) {
+                    await fetch(zaloCfg.webhookUrl, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify({ shop: "Mê Đá Coffee", type: "kitchen_report", message: msg, text: msg })
+                    });
+                    alert("✅ Đã đẩy báo cáo từ Quầy Bếp về Zalo thành công!");
+                } else {
+                    alert("📋 Đã sao chép báo cáo Quầy Bếp vào bộ nhớ tạm! Bạn có thể dán gửi ngay qua Zalo.");
+                }
+            } catch (e) {
+                alert("Lỗi khi tạo báo cáo Zalo từ Quầy Bếp!");
+            }
         }
     </script>
 </body>

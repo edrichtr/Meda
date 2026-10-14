@@ -41,10 +41,10 @@
         <button class="btn-cancel" onclick="window.cancelOrder()">Chỉnh sửa đơn hàng</button>
     </div>
 
-    <!-- TÍCH HỢP FIREBASE -->
+    <!-- TÍCH HỢP FIREBASE & TỰ ĐỘNG ĐẨY THÔNG BÁO VỀ ZALO -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, doc, getDoc, setDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, getDoc, setDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAtZN8CGdH0M-OTs9Z2gGCsiA2AWJ0WRXg",
@@ -92,6 +92,186 @@
             }
         }
         loadConfig();
+
+        // Hàm đẩy thông báo trực tiếp về Zalo sau mỗi đơn hàng (Báo đơn mới + Doanh thu ngày + Món đã bán + Cảnh báo hết nguyên liệu/món)
+        async function notifyZaloAfterOrder(queueNumber) {
+            try {
+                const [zaloSnap, invSnap, prodSnap, ordersSnap] = await Promise.all([
+                    getDoc(doc(db, "config", "zalo")),
+                    getDocs(collection(db, "inventory")),
+                    getDocs(collection(db, "products")),
+                    getDocs(collection(db, "orders"))
+                ]);
+
+                if (!zaloSnap.exists()) return;
+                const zaloCfg = zaloSnap.data();
+                if (zaloCfg.enableAuto === false) return;
+
+                const inventory = invSnap.docs.map(d => d.data());
+                const products = prodSnap.docs.map(d => ({ ...d.data(), id: d.id }));
+                const allOrders = ordersSnap.docs.map(d => d.data());
+
+                // 1. Kiểm tra nguyên liệu hết hoặc sắp hết
+                const outIngredients = [];
+                const lowIngredients = [];
+                inventory.forEach(ing => {
+                    if (ing.quantity <= 0) outIngredients.push(`❌ ${ing.name}: HẾT SẠCH (0 ${ing.unit})`);
+                    else if (ing.quantity <= 50) lowIngredients.push(`⚠️ ${ing.name}: Sắp hết (còn ${ing.quantity} ${ing.unit})`);
+                });
+
+                // 2. Kiểm tra món bị hết (không đủ nguyên liệu pha)
+                const outProducts = [];
+                const lowProducts = [];
+                products.forEach(p => {
+                    let maxCups = Infinity;
+                    if (!p.recipe || p.recipe.length === 0) maxCups = 999;
+                    else {
+                        p.recipe.forEach(ri => {
+                            const inv = inventory.find(i => i.id === ri.ingId);
+                            if (!inv || inv.quantity < ri.amount) maxCups = 0;
+                            else maxCups = Math.min(maxCups, Math.floor(inv.quantity / ri.amount));
+                        });
+                    }
+                    if (maxCups === Infinity) maxCups = 0;
+                    if (maxCups <= 0) outProducts.push(`🚫 ${p.name}: HẾT MÓN (0 ly)`);
+                    else if (maxCups <= 5) lowProducts.push(`⏳ ${p.name}: Chỉ còn pha được ${maxCups} ly`);
+                });
+
+                // 3. Tính tổng tiền & các món bán được trong ngày hôm nay
+                const now = new Date();
+                const todayStr = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()}`;
+                const todayOrders = allOrders.filter(o => o.createdAt && o.createdAt.includes(todayStr));
+
+                let dailyRevenue = 0;
+                let dailyCups = 0;
+                const soldMap = {};
+                todayOrders.forEach(o => {
+                    dailyRevenue += (o.total || 0);
+                    if (o.items && Array.isArray(o.items)) {
+                        o.items.forEach(it => {
+                            const k = it.id || it.name;
+                            if (!soldMap[k]) soldMap[k] = { name: it.name, qty: 0, revenue: 0 };
+                            soldMap[k].qty += it.quantity;
+                            soldMap[k].revenue += (it.price * it.quantity);
+                            dailyCups += it.quantity;
+                        });
+                    }
+                });
+
+                const currentOrderItems = pendingOrder.items.map(i => `• ${i.name} x${i.quantity} (${(i.price * i.quantity).toLocaleString('vi-VN')}đ)`).join('\n');
+                const dailySoldSummary = Object.values(soldMap)
+                    .sort((a, b) => b.qty - a.qty)
+                    .map(s => `• ${s.name}: ${s.qty} ly (${s.revenue.toLocaleString('vi-VN')}đ)`)
+                    .join('\n');
+
+                let msgParts = [];
+
+                if (zaloCfg.notifyOrderDaily !== false) {
+                    msgParts.push(
+                        `🔔 [MÊ ĐÁ] ĐƠN HÀNG MỚI #${queueNumber} (${pendingOrder.orderId})`,
+                        `👤 Khách: ${pendingOrder.customerName} (${pendingOrder.orderType})`,
+                        `🕒 Lúc: ${pendingOrder.createdAt}`,
+                        `🧋 Món vừa đặt:\n${currentOrderItems}`,
+                        `💵 Tiền đơn này: ${pendingOrder.total.toLocaleString('vi-VN')} VNĐ`,
+                        `------------------------`,
+                        `💰 TỔNG TIỀN & MÓN BÁN HÔM NAY (${todayStr}):`,
+                        `• Doanh thu trong ngày: ${dailyRevenue.toLocaleString('vi-VN')} VNĐ (${todayOrders.length} đơn - ${dailyCups} ly)`,
+                        `• Chi tiết các món đã bán hôm nay:\n${dailySoldSummary || 'Chưa có'}`
+                    );
+                }
+
+                const hasStockIssue = (zaloCfg.notifyLowStock !== false && (outIngredients.length > 0 || lowIngredients.length > 0)) ||
+                                      (zaloCfg.notifyOutProduct !== false && (outProducts.length > 0 || lowProducts.length > 0));
+
+                if (hasStockIssue) {
+                    msgParts.push(`========================`);
+                    msgParts.push(`🚨 CẢNH BÁO KHO & THỰC ĐƠN:`);
+                    if (zaloCfg.notifyLowStock !== false) {
+                        if (outIngredients.length > 0) msgParts.push(...outIngredients);
+                        if (lowIngredients.length > 0) msgParts.push(...lowIngredients);
+                    }
+                    if (zaloCfg.notifyOutProduct !== false) {
+                        if (outProducts.length > 0) msgParts.push(...outProducts);
+                        if (lowProducts.length > 0) msgParts.push(...lowProducts);
+                    }
+                }
+
+                if (msgParts.length === 0) return;
+                const finalMessage = msgParts.join('\n');
+
+                // Đẩy về Zalo qua Zalo Bot Creator, Webhook hoặc Zalo OA
+                if ((zaloCfg.mode === 'zalo_bot' || !zaloCfg.mode) && zaloCfg.botToken && zaloCfg.botChatId) {
+                    const targetUrl = `https://bot-api.zapps.me/bot${zaloCfg.botToken}/sendMessage`;
+                    const bodyData = JSON.stringify({ chat_id: zaloCfg.botChatId, text: finalMessage });
+                    try {
+                        await fetch(targetUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: bodyData
+                        });
+                    } catch (e1) {
+                        try {
+                            await fetch(`https://corsproxy.io/?${encodeURIComponent(targetUrl)}`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: bodyData
+                            });
+                        } catch (e2) {
+                            const formBody = new URLSearchParams();
+                            formBody.append('chat_id', zaloCfg.botChatId);
+                            formBody.append('text', finalMessage);
+                            await fetch(targetUrl, {
+                                method: 'POST',
+                                mode: 'no-cors',
+                                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                                body: formBody.toString()
+                            });
+                        }
+                    }
+                } else if (zaloCfg.mode === 'webhook' && zaloCfg.webhookUrl) {
+                    const payload = {
+                        shop: "Mê Đá Coffee",
+                        type: hasStockIssue ? "order_and_stock_alert" : "new_order_daily_report",
+                        message: finalMessage,
+                        text: finalMessage,
+                        content: finalMessage,
+                        data: {
+                            orderId: pendingOrder.orderId,
+                            queueNumber,
+                            customerName: pendingOrder.customerName,
+                            orderTotal: pendingOrder.total,
+                            dailyRevenue,
+                            dailyOrdersCount: todayOrders.length,
+                            dailyCups,
+                            soldToday: Object.values(soldMap),
+                            outIngredients,
+                            outProducts
+                        }
+                    };
+                    await fetch(zaloCfg.webhookUrl, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify(payload)
+                    });
+                } else if (zaloCfg.mode === 'zalo_oa' && zaloCfg.oaAccessToken && zaloCfg.oaRecipientId) {
+                    const oaEndpoint = zaloCfg.corsProxy || "https://openapi.zalo.me/v3.0/oa/message/cs";
+                    await fetch(oaEndpoint, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'access_token': zaloCfg.oaAccessToken
+                        },
+                        body: JSON.stringify({
+                            recipient: { user_id: zaloCfg.oaRecipientId },
+                            message: { text: finalMessage }
+                        })
+                    });
+                }
+            } catch (err) {
+                console.warn("Không thể gửi thông báo Zalo tự động:", err);
+            }
+        }
 
         window.confirmPayment = async function() {
             const btn = document.getElementById('btnConfirmPayment');
@@ -142,6 +322,9 @@
                     status: 'Chờ pha chế',
                     timestamp: serverTimestamp()
                 });
+
+                // 5. Đẩy thông báo trực tiếp về Zalo (Đơn mới + Doanh thu ngày + Cảnh báo hết nguyên liệu / hết món)
+                await notifyZaloAfterOrder(queue);
 
                 localStorage.removeItem('meda_pending_order');
                 alert(`Thanh toán thành công!\n\nTên: ${pendingOrder.customerName || 'Khách hàng'}\nSỐ THỨ TỰ CỦA BẠN LÀ: #${queue}\n\nVui lòng chờ quán gọi nhé!`);

@@ -9,7 +9,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
-        :root { --bg-color: #FBF6EE; --card-bg: #FFFDF9; --primary: #3D2B1F; --accent: #C85A32; --border: #E8DFC8; --green: #2E7D32; --red: #C62828; --blue: #1565C0; --amber: #EF6C00; }
+        :root { --bg-color: #FBF6EE; --card-bg: #FFFDF9; --primary: #3D2B1F; --accent: #C85A32; --border: #E8DFC8; --green: #2E7D32; --red: #C62828; --blue: #1565C0; --amber: #EF6C00; --zalo: #0068FF; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg-color); color: #2B1E16; padding-bottom: 3rem; }
         header { background-color: var(--primary); color: #FAF4EB; padding: 1.2rem 2rem; display: flex; justify-content: space-between; align-items: center; }
@@ -17,11 +17,12 @@
         .btn-header { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; text-decoration: none; font-size: 0.9rem;}
         .main-content { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
         .filter-box { background: var(--card-bg); padding: 1rem 1.5rem; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.03); margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;}
-        .filter-group { display: flex; gap: 10px; align-items: center; }
+        .filter-group { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
         .filter-group label { font-weight: 600; font-size: 0.9rem; color: var(--primary); }
         .filter-group input, .filter-group select { padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; font-family: inherit; }
         .btn-action { padding: 8px 16px; background-color: var(--accent); color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s;}
         .btn-export { background-color: var(--blue); }
+        .btn-zalo { background-color: var(--zalo); }
         .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
         .stat-card { background: var(--card-bg); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border); text-align: center; }
         .stat-card h4 { font-size: 0.95rem; color: #666; margin-bottom: 10px; font-weight: 600; }
@@ -73,7 +74,8 @@
                 </select>
                 <button class="btn-action" onclick="window.processReport()">Lọc Dữ Liệu</button>
             </div>
-            <div>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button class="btn-action btn-zalo" onclick="window.pushCurrentReportToZalo()">💬 Đẩy Báo Cáo Này Về Zalo</button>
                 <button class="btn-action btn-export" onclick="window.exportToPDF()">📥 Xuất Báo Cáo PDF</button>
             </div>
         </div>
@@ -135,7 +137,11 @@
         const formatMoney = (amount) => amount.toLocaleString('vi-VN');
         let financeChartInstance = null; let salesChartInstance = null;
         let globalAllOrders = [];
+        let globalInventory = [];
+        let globalProducts = [];
+        let globalZaloConfig = null;
         let globalTotalCosts = 0;
+        let currentReportSummary = { title: '', revenue: 0, costs: 0, profit: 0, totalCups: 0, salesArray: [] };
 
         window.toggleFilterInputs = function() {
             const filterType = document.getElementById('filterType').value;
@@ -147,15 +153,22 @@
         async function fetchCloudData() {
             document.getElementById('globalLoader').style.display = 'flex';
             try {
-                // Lấy Chi phí từ Cloud
-                const finSnap = await getDoc(doc(db, "config", "finance"));
+                const [finSnap, zaloSnap, invSnap, prodSnap, ordersSnap] = await Promise.all([
+                    getDoc(doc(db, "config", "finance")),
+                    getDoc(doc(db, "config", "zalo")),
+                    getDocs(collection(db, "inventory")),
+                    getDocs(collection(db, "products")),
+                    getDocs(collection(db, "orders"))
+                ]);
+
                 if(finSnap.exists()) {
                     let f = finSnap.data();
                     globalTotalCosts = (f.fixedCosts || 0) + (f.ingredientCosts || 0);
                 }
+                if(zaloSnap.exists()) globalZaloConfig = zaloSnap.data();
+                globalInventory = invSnap.docs.map(d => d.data());
+                globalProducts = prodSnap.docs.map(d => ({ ...d.data(), id: d.id }));
 
-                // Lấy tất cả Đơn hàng từ Cloud
-                const ordersSnap = await getDocs(collection(db, "orders"));
                 globalAllOrders = [];
                 ordersSnap.forEach(d => globalAllOrders.push(d.data()));
 
@@ -224,6 +237,119 @@
             if (filterType === 'month') pdfTitle += " THÁNG " + document.getElementById('filterMonth').value;
             if (filterType === 'year') pdfTitle += " NĂM " + document.getElementById('filterYear').value;
             document.getElementById('reportTitle').innerText = pdfTitle;
+
+            currentReportSummary = { title: pdfTitle, revenue: filteredRevenue, costs: globalTotalCosts, profit, totalCups, salesArray };
+        }
+
+        // Đẩy báo cáo đang xem trên màn hình về Zalo
+        window.pushCurrentReportToZalo = async function() {
+            const outIngs = globalInventory.filter(i => i.quantity <= 0).map(i => `❌ ${i.name} (0 ${i.unit})`);
+            const outProds = [];
+            globalProducts.forEach(p => {
+                let maxCups = Infinity;
+                if (!p.recipe || p.recipe.length === 0) maxCups = 999;
+                else {
+                    p.recipe.forEach(ri => {
+                        const inv = globalInventory.find(i => i.id === ri.ingId);
+                        if (!inv || inv.quantity < ri.amount) maxCups = 0;
+                        else maxCups = Math.min(maxCups, Math.floor(inv.quantity / ri.amount));
+                    });
+                }
+                if (maxCups === 0 || maxCups === Infinity) outProds.push(`🚫 ${p.name} (Hết món)`);
+            });
+
+            const salesLines = currentReportSummary.salesArray.length > 0
+                ? currentReportSummary.salesArray.map((s, idx) => `${idx + 1}. ${s.name}: ${s.quantity} ly (${formatMoney(s.revenue)} VNĐ)`).join('\n')
+                : '- Chưa có sản phẩm nào bán ra trong kỳ này.';
+
+            const msg = [
+                `📊 [MÊ ĐÁ COFFEE] ${currentReportSummary.title}`,
+                `🕒 Xuất lúc: ${new Date().toLocaleString('vi-VN')}`,
+                `========================`,
+                `💰 1. SỐ TIỀN CHI TIẾT:`,
+                `• Tổng doanh thu: ${formatMoney(currentReportSummary.revenue)} VNĐ`,
+                `• Tổng chi phí: ${formatMoney(currentReportSummary.costs)} VNĐ`,
+                `• Lợi nhuận ròng: ${formatMoney(currentReportSummary.profit)} VNĐ`,
+                `• Tổng số ly đã bán: ${currentReportSummary.totalCups} ly`,
+                `========================`,
+                `🧋 2. CHI TIẾT BÁN ĐƯỢC NHỮNG GÌ:`,
+                salesLines,
+                `========================`,
+                `⚠️ 3. TÌNH TRẠNG HẾT NGUYÊN LIỆU & HẾT MÓN:`,
+                (outIngs.length === 0 && outProds.length === 0)
+                    ? `✅ Tất cả nguyên liệu và món đều còn đủ.`
+                    : [...outIngs, ...outProds].join('\n')
+            ].join('\n');
+
+            navigator.clipboard.writeText(msg).catch(() => {});
+
+            if (globalZaloConfig && (globalZaloConfig.mode === 'zalo_bot' || !globalZaloConfig.mode) && globalZaloConfig.botToken && globalZaloConfig.botChatId) {
+                document.getElementById('globalLoader').style.display = 'flex';
+                const targetUrl = `https://bot-api.zapps.me/bot${globalZaloConfig.botToken}/sendMessage`;
+                try {
+                    const formBody = new URLSearchParams();
+                    formBody.append('chat_id', globalZaloConfig.botChatId);
+                    formBody.append('text', msg);
+                    await fetch(targetUrl, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: formBody.toString()
+                    });
+                    document.getElementById('globalLoader').style.display = 'none';
+                    alert("✅ Đã đẩy trực tiếp Báo cáo chi tiết về Bot MÊ ĐÁ Assistant trên Zalo!");
+                } catch (e) {
+                    document.getElementById('globalLoader').style.display = 'none';
+                    alert("⚠️ Đã sao chép nội dung báo cáo vào bộ nhớ tạm. Vui lòng dán vào Zalo!");
+                }
+            } else if (globalZaloConfig && globalZaloConfig.mode === 'webhook' && globalZaloConfig.webhookUrl) {
+                document.getElementById('globalLoader').style.display = 'flex';
+                try {
+                    await fetch(globalZaloConfig.webhookUrl, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify({
+                            shop: "Mê Đá Coffee",
+                            type: "detailed_report",
+                            message: msg,
+                            text: msg,
+                            content: msg,
+                            data: currentReportSummary
+                        })
+                    });
+                    document.getElementById('globalLoader').style.display = 'none';
+                    alert("✅ Đã đẩy trực tiếp Báo cáo chi tiết về Zalo thành công!");
+                } catch (e) {
+                    document.getElementById('globalLoader').style.display = 'none';
+                    alert("⚠️ Đã sao chép nội dung báo cáo vào bộ nhớ tạm. Vui lòng dán vào Zalo!");
+                }
+            } else if (globalZaloConfig && globalZaloConfig.mode === 'zalo_oa' && globalZaloConfig.oaAccessToken && globalZaloConfig.oaRecipientId) {
+                document.getElementById('globalLoader').style.display = 'flex';
+                try {
+                    const oaEndpoint = globalZaloConfig.corsProxy || "https://openapi.zalo.me/v3.0/oa/message/cs";
+                    await fetch(oaEndpoint, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'access_token': globalZaloConfig.oaAccessToken
+                        },
+                        body: JSON.stringify({
+                            recipient: { user_id: globalZaloConfig.oaRecipientId },
+                            message: { text: msg }
+                        })
+                    });
+                    document.getElementById('globalLoader').style.display = 'none';
+                    alert("✅ Đã đẩy báo cáo về Zalo OA thành công!");
+                } catch (e) {
+                    document.getElementById('globalLoader').style.display = 'none';
+                    alert("⚠️ Đã sao chép báo cáo vào Clipboard. Hãy kiểm tra lại cấu hình Zalo OA trong trang Quản trị.");
+                }
+            } else {
+                alert("📋 Đã sao chép toàn bộ Báo cáo vào bộ nhớ tạm!\n(Để web tự động bắn thẳng về Zalo không cần bấm, bạn hãy vào trang Quản Trị -> mục Kết nối Zalo để dán Webhook URL hoặc Zalo OA Token nhé).");
+                const phone = (globalZaloConfig && globalZaloConfig.phone) ? globalZaloConfig.phone.replace(/[^0-9]/g, '') : '';
+                window.open(phone ? `https://zalo.me/${phone}` : `https://chat.zalo.me/`, '_blank');
+            }
         }
 
         function renderSalesTable(salesArray) {
@@ -284,7 +410,7 @@
         document.getElementById('filterType').value = 'month';
         window.toggleFilterInputs();
         
-        fetchCloudData(); // Tải data khi vào trang
+        fetchCloudData();
     </script>
 </body>
 </html>
