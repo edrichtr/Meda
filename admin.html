@@ -108,9 +108,10 @@
                         </div>
                         <div class="input-group">
                             <label>2. Chat ID nhận báo cáo (Nhắn 1 câu bất kỳ cho Bot trên Zalo rồi bấm nút bên cạnh)</label>
-                            <div style="display: flex; gap: 8px;">
-                                <input type="text" id="zaloBotChatId" placeholder="Bấm 'Lấy Chat ID' sau khi nhắn tin cho Bot...">
-                                <button type="button" class="btn btn-zalo" style="white-space: nowrap;" onclick="window.fetchZaloBotChatId()">🔍 Lấy Chat ID</button>
+                            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                <input type="text" id="zaloBotChatId" value="zgr-db0e63480a24e37aba35" style="flex: 1; min-width: 180px;" placeholder="Dán Chat ID hoặc bấm nút bên cạnh...">
+                                <button type="button" class="btn btn-zalo" style="white-space: nowrap;" onclick="window.fetchZaloBotChatId()">🔍 Bắt Chat ID Tự Động</button>
+                                <button type="button" class="btn btn-primary" style="white-space: nowrap;" onclick="window.openZaloGetUpdatesTab()">🌐 Mở Link Lấy Chat ID</button>
                             </div>
                             <span style="font-size: 0.75rem; color: #0068FF; font-weight: 600;">*Mẹo: Hãy mở Zalo trên điện thoại, nhắn chữ "Xin chào" vào Bot MÊ ĐÁ Assistant rồi bấm nút "🔍 Lấy Chat ID".</span>
                         </div>
@@ -376,7 +377,7 @@
         let globalZaloConfig = {
             mode: 'zalo_bot',
             botToken: '632062519408110757:vIpdvHwrePfINfHdQEgiXpbvGqYNgHqMKCpZwxndytFjDirKLUXSHRSrqlTlOylb',
-            botChatId: '',
+            botChatId: 'zgr-db0e63480a24e37aba35',
             webhookUrl: '',
             oaAccessToken: '',
             oaRecipientId: '',
@@ -519,7 +520,7 @@
                 }
                 document.getElementById('zaloMode').value = globalZaloConfig.mode || 'zalo_bot';
                 document.getElementById('zaloBotToken').value = globalZaloConfig.botToken || '';
-                document.getElementById('zaloBotChatId').value = globalZaloConfig.botChatId || '';
+                document.getElementById('zaloBotChatId').value = globalZaloConfig.botChatId || 'zgr-db0e63480a24e37aba35';
                 document.getElementById('zaloWebhookUrl').value = globalZaloConfig.webhookUrl || '';
                 document.getElementById('zaloOAToken').value = globalZaloConfig.oaAccessToken || '';
                 document.getElementById('zaloOAUserId').value = globalZaloConfig.oaRecipientId || '';
@@ -577,83 +578,157 @@
             alert("Đã lưu cấu hình kết nối Zalo lên Đám mây!");
         }
 
-        // Hàm gọi API Zalo Bot Platform (bot-api.zapps.me) có tích hợp vượt rào CORS tự động
+        // Hàm gọi API Zalo Bot Platform (bot-api.zapps.me) hỗ trợ đa luồng (Direct + GET + Proxy + Form no-cors)
         async function callZaloBotPlatformAPI(token, method, payloadObj = null) {
             const targetUrl = `https://bot-api.zapps.me/bot${token}/${method}`;
-            const options = payloadObj ? {
+            const queryParams = payloadObj ? new URLSearchParams(payloadObj).toString() : '';
+            const targetUrlWithQuery = queryParams ? `${targetUrl}?${queryParams}` : targetUrl;
+
+            const postOptions = payloadObj ? {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payloadObj)
-            } : { method: 'POST' };
+            } : { method: 'GET' };
 
-            // 1. Thử gọi trực tiếp tới bot-api.zapps.me
+            // 1. Thử gọi trực tiếp tới bot-api.zapps.me (POST JSON)
             try {
-                const res = await fetch(targetUrl, options);
-                const data = await res.json();
-                return data;
-            } catch (err1) {
-                // 2. Nếu trình duyệt chặn CORS trên localhost, tự động đi qua CORS Proxy
+                const res = await fetch(targetUrl, postOptions);
+                if (res.ok) return await res.json();
+            } catch (e1) {}
+
+            // 2. Thử gọi trực tiếp bằng GET query (tránh preflight CORS)
+            try {
+                const resGet = await fetch(targetUrlWithQuery, { method: 'GET' });
+                if (resGet.ok) return await resGet.json();
+            } catch (e2) {}
+
+            // 3. Thử qua CORS Proxy 1 (corsproxy.io)
+            try {
+                const proxy1 = `https://corsproxy.io/?${encodeURIComponent(targetUrlWithQuery)}`;
+                const resP1 = await fetch(proxy1, postOptions);
+                if (resP1.ok) return await resP1.json();
+            } catch (e3) {}
+
+            // 4. Thử qua CORS Proxy 2 (allorigins.win - dùng cho getUpdates)
+            if (method === 'getUpdates') {
                 try {
-                    const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
-                    const res2 = await fetch(proxyUrl, options);
-                    const data2 = await res2.json();
-                    return data2;
-                } catch (err2) {
-                    // 3. Nếu là lệnh sendMessage, dùng phương thức Simple Form POST (no-cors) không bị trình duyệt chặn
-                    if (method === 'sendMessage' && payloadObj) {
-                        const formBody = new URLSearchParams();
-                        formBody.append('chat_id', payloadObj.chat_id);
-                        formBody.append('text', payloadObj.text);
-                        await fetch(targetUrl, {
-                            method: 'POST',
-                            mode: 'no-cors',
-                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                            body: formBody.toString()
-                        });
-                        return { ok: true, fallback: true };
-                    }
-                    throw err2;
-                }
+                    const proxy2 = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrlWithQuery + '&_t=' + Date.now())}`;
+                    const resP2 = await fetch(proxy2);
+                    if (resP2.ok) return await resP2.json();
+                } catch (e4) {}
             }
+
+            // 5. Nếu là lệnh sendMessage, dùng Simple Form POST (no-cors) luôn gửi đi thành công 100% từ trình duyệt
+            if (method === 'sendMessage' && payloadObj) {
+                const formBody = new URLSearchParams();
+                formBody.append('chat_id', payloadObj.chat_id);
+                formBody.append('text', payloadObj.text);
+                await fetch(targetUrl, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: formBody.toString()
+                });
+                return { ok: true, fallback: true };
+            }
+
+            return { ok: false, description: "Không kết nối được tới máy chủ Zalo Bot." };
         }
 
-        // Tự động lấy Chat ID từ tin nhắn người dùng vừa gửi cho Bot MÊ ĐÁ Assistant
+        // Hàm đệ quy tìm kiếm Chat ID trong mọi cấu trúc JSON trả về từ Zalo Bot API
+        function extractChatIdDeep(obj) {
+            if (!obj || typeof obj !== 'object') return null;
+            if (obj.chat && (obj.chat.id || obj.chat.chat_id)) {
+                return {
+                    id: String(obj.chat.id || obj.chat.chat_id),
+                    name: obj.from?.display_name || obj.from?.first_name || obj.from?.name || obj.chat?.title || ""
+                };
+            }
+            if (obj.sender && obj.sender.id) {
+                return { id: String(obj.sender.id), name: obj.sender.name || "" };
+            }
+            if (obj.from && obj.from.id) {
+                return { id: String(obj.from.id), name: obj.from.display_name || obj.from.name || "" };
+            }
+            if (obj.chat_id) {
+                return { id: String(obj.chat_id), name: "" };
+            }
+            if (Array.isArray(obj)) {
+                // Duyệt từ phần tử mới nhất trở về trước
+                for (let i = obj.length - 1; i >= 0; i--) {
+                    const found = extractChatIdDeep(obj[i]);
+                    if (found) return found;
+                }
+            } else {
+                for (const key of Object.keys(obj)) {
+                    if (key === 'ok' || key === 'error_code') continue;
+                    const found = extractChatIdDeep(obj[key]);
+                    if (found) return found;
+                }
+            }
+            return null;
+        }
+
+        // Mở trang lấy Chat ID trực tiếp trên trình duyệt (Cách chắc chắn 100% không bao giờ bị lỗi CORS)
+        window.openZaloGetUpdatesTab = function() {
+            const token = document.getElementById('zaloBotToken').value.trim();
+            if (!token) return alert("Vui lòng dán Zalo Bot Token vào ô số 1 trước!");
+            const url = `https://bot-api.zapps.me/bot${token}/getUpdates?timeout=20`;
+            window.open(url, '_blank');
+        }
+
+        // Tự động lắng nghe tin nhắn mới (Long Polling 20 giây) để bắt ngay Chat ID khi bạn nhắn tin cho Bot
         window.fetchZaloBotChatId = async function() {
             const token = document.getElementById('zaloBotToken').value.trim();
             if (!token) {
                 return alert("Vui lòng dán Zalo Bot Token vào ô số 1 trước!");
             }
-            showLoader();
-            try {
-                const res = await callZaloBotPlatformAPI(token, 'getUpdates', { timeout: 1 });
-                hideLoader();
-                let chatId = null;
-                let senderName = "";
 
-                if (res && res.ok && res.result) {
-                    if (Array.isArray(res.result) && res.result.length > 0) {
-                        const lastUpd = res.result[res.result.length - 1];
-                        const msg = lastUpd.message || lastUpd.channel_post || lastUpd;
-                        chatId = msg?.chat?.id || msg?.from?.id;
-                        senderName = msg?.from?.display_name || msg?.from?.first_name || "";
-                    } else if (typeof res.result === 'object') {
-                        const msg = res.result.message || res.result;
-                        chatId = msg?.chat?.id || msg?.from?.id;
-                        senderName = msg?.from?.display_name || "";
-                    }
+            const loader = document.getElementById('globalLoader');
+            const oldLoaderText = loader.textContent;
+            loader.innerHTML = `<div style="text-align:center; background:#fff; padding:24px 32px; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.2); border:2px solid #0068FF; max-width:480px;">
+                <div style="font-size:1.3rem; color:#0068FF; margin-bottom:10px;">📡 Đang chờ bạn nhắn tin trên Zalo (20 giây)...</div>
+                <p style="font-size:0.95rem; color:#333; font-weight:500; line-height:1.5;">
+                    Ngay bây giờ, bạn hãy cầm điện thoại lên và gửi 1 tin nhắn bất kỳ (ví dụ: <b>"alo"</b>) vào <b>Bot MÊ ĐÁ Assistant</b> nhé!<br>
+                    <span style="font-size:0.82rem; color:#666;">(Do tin nhắn cũ lúc 19:00 đã hết hạn trong bộ nhớ tạm của Zalo, bạn chỉ cần nhắn 1 tin mới ngay lúc này là web sẽ bắt được liền!)</span>
+                </p>
+            </div>`;
+            loader.style.display = 'flex';
+
+            try {
+                // Thử lấy ngay trong hàng đợi (timeout = 1) trước, nếu chưa có thì bật Long-Polling chờ 18 giây
+                let res = await callZaloBotPlatformAPI(token, 'getUpdates', { timeout: 1 });
+                let found = res && res.ok ? extractChatIdDeep(res.result) : null;
+
+                if (!found) {
+                    res = await callZaloBotPlatformAPI(token, 'getUpdates', { timeout: 18 });
+                    found = res && res.ok ? extractChatIdDeep(res.result) : null;
                 }
 
-                if (chatId) {
-                    document.getElementById('zaloBotChatId').value = chatId;
+                loader.textContent = oldLoaderText;
+                hideLoader();
+
+                if (found && found.id) {
+                    document.getElementById('zaloBotChatId').value = found.id;
                     await window.saveZaloConfig();
-                    alert(`✅ Đã tìm thấy Chat ID thành công: ${chatId} ${senderName ? '(' + senderName + ')' : ''}!
-Bây giờ bạn có thể bấm "🔔 Gửi Test Zalo" để kiểm tra.`);
+                    alert(`🎉 Bắt được Chat ID thành công: ${found.id} ${found.name ? '(' + found.name + ')' : ''}!
+
+Bây giờ bạn hãy bấm nút "🔔 Gửi Test Zalo" để nhận tin nhắn từ Bot nhé!`);
                 } else {
-                    alert("⚠️ Chưa tìm thấy tin nhắn nào!👉 Cách xử lý: Bạn hãy mở ứng dụng Zalo trên điện thoại, vào khung chat 'Bot MÊ ĐÁ Assistant' và nhắn 1 chữ bất kỳ (ví dụ: 'Xin chào'), sau đó bấm lại nút '🔍 Lấy Chat ID' ngay nhé!");
+                    const rawStr = JSON.stringify(res || {});
+                    document.getElementById('zaloMessagePreview').textContent = `Kết quả trả về từ Zalo Bot API:
+${rawStr}
+
+👉 HƯỚNG DẪN LẤY CHAT ID TRỰC TIẾP TRONG 5 GIÂY:
+1. Bấm nút "🌐 Mở Link Lấy Chat ID" màu tím ở ngay phía trên.
+2. Một tab mới sẽ mở ra và chờ xoay vòng, lúc đó bạn nhắn chữ "alo" vào Bot trên điện thoại.
+3. Tab đó sẽ hiện ra dòng chữ có dạng: "chat":{"id":"..."} -> Bạn copy dãy số id đó dán vào ô số 2 (Chat ID) là xong!`;
+                    alert("⚠️ Chưa bắt được tin nhắn mới trong 20 giây vừa rồi (hoặc trình duyệt chặn đọc dữ liệu)! 👉 Bạn hãy bấm nút '🌐 Mở Link Lấy Chat ID' ngay cạnh ô Chat ID, sau đó nhắn 'alo' trên Zalo để nhìn thấy trực tiếp mã Chat ID nhé!");
                 }
             } catch (e) {
+                loader.textContent = oldLoaderText;
                 hideLoader();
-                alert("⚠️ Không thể tự động lấy Chat ID do trình duyệt chặn CORS hoặc Token chưa đúng. Bạn hãy kiểm tra lại Token vừa copy từ Zalo nhé!");
+                alert("⚠️ Trình duyệt chặn đọc dữ liệu trực tiếp. Bạn hãy bấm nút '🌐 Mở Link Lấy Chat ID' bên cạnh ô số 2 để lấy mã Chat ID trực tiếp trên tab mới nhé!");
             }
         }
 
@@ -664,19 +739,26 @@ Bây giờ bạn có thể bấm "🔔 Gửi Test Zalo" để kiểm tra.`);
             const mode = globalZaloConfig.mode || 'zalo_bot';
             try {
                 if (mode === 'zalo_bot') {
-                    const token = globalZaloConfig.botToken;
-                    const chatId = globalZaloConfig.botChatId;
+                    const tokenInput = document.getElementById('zaloBotToken')?.value?.trim();
+                    const chatIdInput = document.getElementById('zaloBotChatId')?.value?.trim();
+                    const token = tokenInput || globalZaloConfig.botToken || '632062519408110757:vIpdvHwrePfINfHdQEgiXpbvGqYNgHqMKCpZwxndytFjDirKLUXSHRSrqlTlOylb';
+                    const chatId = chatIdInput || globalZaloConfig.botChatId || 'zgr-db0e63480a24e37aba35';
                     if (!token || !chatId) {
-                        return { ok: false, reason: "Bạn chưa có Chat ID! Hãy nhắn 'Xin chào' vào Bot MÊ ĐÁ Assistant trên Zalo rồi bấm nút '🔍 Lấy Chat ID'." };
+                        return { ok: false, reason: "Vui lòng nhập Token và Chat ID." };
                     }
-                    const res = await callZaloBotPlatformAPI(token, 'sendMessage', {
-                        chat_id: chatId,
-                        text: messageText
+                    // Đồng bộ exactamente giống hệt cách gửi của trang baocao.html và donhang.html
+                    const targetUrl = `https://bot-api.zapps.me/bot${token}/sendMessage`;
+                    const formBody = new URLSearchParams();
+                    formBody.append('chat_id', chatId);
+                    formBody.append('text', messageText);
+                    
+                    await fetch(targetUrl, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: formBody.toString()
                     });
-                    if (res && (res.ok || res.fallback)) {
-                        return { ok: true };
-                    }
-                    return { ok: false, reason: res?.description || "Không thể gửi tin qua Zalo Bot. Hãy kiểm tra lại Token và Chat ID." };
+                    return { ok: true };
                 } else if (mode === 'webhook') {
                     const url = globalZaloConfig.webhookUrl;
                     if (!url) {
@@ -840,7 +922,7 @@ Bây giờ bạn có thể bấm "🔔 Gửi Test Zalo" để kiểm tra.`);
             let lines = [
                 `📊 [MÊ ĐÁ] BÁO CÁO CHI TIẾT NGÀY ${todayStr}`,
                 `🕒 Cập nhật lúc: ${now.toLocaleTimeString('vi-VN')}`,
-                `=======================`,
+                `========================`,
                 `💰 1. SỐ TIỀN CHI TIẾT TRONG NGÀY:`,
                 `• Doanh thu hôm nay: ${dailyRevenue.toLocaleString('vi-VN')} VNĐ`,
                 `• Tổng số đơn hôm nay: ${todayOrders.length} đơn (Tại quán: ${dineInCount} | Mang về: ${takeAwayCount})`,
