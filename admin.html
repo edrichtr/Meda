@@ -56,6 +56,15 @@
         .checkbox-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
         .checkbox-row input { width: 18px; height: 18px; cursor: pointer; }
         .zalo-preview-box { background: #EBF3FF; border: 1px dashed var(--zalo); border-radius: 8px; padding: 12px; font-size: 0.85rem; white-space: pre-wrap; max-height: 240px; overflow-y: auto; color: #1a2a3a; margin-top: 10px; font-family: monospace; }
+        /* --- Bảo mật khu vực kết nối Zalo --- */
+        .zalo-lock-banner { border: 2px dashed #B3D4FF; border-radius: 10px; padding: 18px; background: linear-gradient(180deg, #F5F9FF 0%, #FFFDF9 100%); text-align: center; }
+        .zalo-lock-bar { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px; background:#E8F5E9; border:1px solid #A5D6A7; border-radius:8px; padding:8px 12px; }
+        .zalo-info-bar { display:flex; flex-wrap:wrap; gap:10px; align-items:center; background:#EBF3FF; border:1px dashed #B3D4FF; border-radius:8px; padding:10px 12px; font-size:0.82rem; color:#1a2a3a; margin-bottom:12px; }
+        .zalo-err { display:none; background:#FFEBEE; border:1px solid #EF9A9A; color:var(--red); border-radius:8px; padding:8px 12px; font-size:0.8rem; font-weight:600; margin-bottom:12px; white-space:pre-wrap; }
+        .zalo-lock-chip { display:inline-flex; align-items:center; gap:6px; background:#E3F2FD; color:var(--zalo); border:1px solid #90CAF9; border-radius:20px; padding:4px 12px; font-size:0.78rem; font-weight:700; margin:0 4px 4px 0; }
+        .secret-wrap { display:flex; gap:6px; align-items:center; }
+        .secret-wrap input { flex:1; min-width:0; }
+        .btn-xs { padding: 4px 10px; font-size: 0.78rem; }
     </style>
 </head>
 <body>
@@ -89,6 +98,50 @@
                 <span>💬 Kết Nối Zalo - Báo Cáo Tự Động (Hết Nguyên Liệu, Hết Món, Doanh Thu & Món Bán)</span>
                 <span class="badge" id="zaloStatusBadge" style="background:#E3F2FD; color:var(--zalo);">Chưa cấu hình</span>
             </h3>
+
+            <!-- ============ PHẦN LUÔN HIỂN THỊ: LỊCH TỰ ĐỘNG + NÚT THỦ CÔNG ============ -->
+            <div class="zalo-info-bar">
+                <span>⏱️ <b id="zaloNextRunText">—</b></span>
+                <span>📨 <b id="zaloLastSentText">—</b></span>
+                <span>🔁 <b id="zaloWatcherText">—</b></span>
+            </div>
+            <div id="zaloErrorText" class="zalo-err"></div>
+
+            <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
+                <button class="btn btn-info" onclick="window.testZaloConnection()">🔔 Gửi Test Zalo</button>
+                <button class="btn btn-danger" onclick="window.pushStockAlertToZalo(true)">⚠️ Báo Hết Nguyên Liệu / Hết Món Ngay</button>
+                <button class="btn btn-green" onclick="window.pushDailyReportToZalo(true)">📊 Đẩy Báo Cáo Doanh Thu & Món Bán Hôm Nay</button>
+            </div>
+
+            <div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; gap:8px; flex-wrap:wrap;">
+                    <strong style="font-size:0.85rem; color:var(--primary);">Bản xem trước nội dung tin nhắn Zalo gần nhất:</strong>
+                    <div style="display:flex; gap:8px;">
+                        <button class="btn btn-primary btn-xs" onclick="window.copyLatestZaloMessage()">📋 Copy Tin Nhắn</button>
+                        <button class="btn btn-zalo btn-xs" onclick="window.openZaloDirectChat()">💬 Mở Zalo Dán Gửi Ngay</button>
+                    </div>
+                </div>
+                <div id="zaloMessagePreview" class="zalo-preview-box">Chưa có bản tin nào được tạo. Hãy bấm "Đẩy Báo Cáo Doanh Thu & Món Bán Hôm Nay" hoặc "Báo Hết Nguyên Liệu / Hết Món Ngay" để xem và gửi về Zalo!</div>
+            </div>
+
+            <!-- ============ PHẦN ĐƯỢC BẢO VỆ: CHỈ MỞ KHI CÓ MÃ ĐĂNG NHẬP RIÊNG ============ -->
+            <div id="zaloLockedView" class="zalo-lock-banner" style="margin-top:16px;">
+                <div style="font-size:2rem; line-height:1;">🔒</div>
+                <strong style="display:block; color:var(--zalo); font-family:'Merriweather', serif; margin:8px 0 6px; font-size:1rem;">Khu Vực Kết Nối Zalo Đang Được Bảo Vệ</strong>
+                <p style="font-size:0.82rem; color:#555; margin-bottom:10px;">Token, Chat ID, Webhook và các tuỳ chọn gửi tự động được ẩn hoàn toàn.<br>Bạn phải nhập <b>Mã bảo mật Zalo</b> riêng biệt mới chỉnh sửa được phần này.</p>
+                <div id="zaloLockedSummary" class="zalo-preview-box" style="max-height:none; text-align:left;">Đang tải thông tin cấu hình...</div>
+                <button class="btn btn-zalo" style="margin-top:12px;" onclick="window.openZaloUnlockModal()">🔐 Nhập Mã &amp; Mở Cấu Hình</button>
+            </div>
+
+            <div id="zaloUnlockedView" style="display:none; margin-top:16px;">
+                <div class="zalo-lock-bar">
+                    <strong style="font-size:0.85rem; color:var(--green);">🔓 Đã mở khoá cấu hình Zalo — tự động khoá lại sau 10 phút không thao tác</strong>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <button class="btn btn-accent btn-xs" onclick="window.openZaloChangeCodeModal()">🗝️ Đổi Mã Bảo Mật</button>
+                        <button class="btn btn-danger btn-xs" onclick="window.lockZaloPanel()">🔒 Khóa Lại</button>
+                    </div>
+                </div>
+
             <div class="grid-2">
                 <div>
                     <div class="input-group">
@@ -104,12 +157,16 @@
                     <div id="zaloBotBox">
                         <div class="input-group">
                             <label>1. Zalo Bot Token (Copy từ tin nhắn khởi tạo Bot)</label>
-                            <input type="text" id="zaloBotToken" value="632062519408110757:vIpdvHwrePfINfHdQEgiXpbvGqYNgHqMKCpZwxndytFjDirKLUXSHRSrqlTlOylb" placeholder="VD: 632062519408110757:vIpdvHwrePfINf...">
+                            <div class="secret-wrap">
+                                <input type="password" id="zaloBotToken" placeholder="VD: 632062519408110757:vIpdvHwrePfINf..." autocomplete="off">
+                                <button type="button" class="btn btn-zalo btn-xs" onclick="window.toggleSecret('zaloBotToken', this)">👁 Hiện</button>
+                            </div>
+                            <span style="font-size:0.75rem; color:var(--red); font-weight:600;">*Token là khoá bí mật của Bot. Được lưu trên Firebase và KHÔNG còn nằm trong mã nguồn của trang này.</span>
                         </div>
                         <div class="input-group">
                             <label>2. Chat ID nhận báo cáo (Nhắn 1 câu bất kỳ cho Bot trên Zalo rồi bấm nút bên cạnh)</label>
                             <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                                <input type="text" id="zaloBotChatId" value="zgr-db0e63480a24e37aba35" style="flex: 1; min-width: 180px;" placeholder="Dán Chat ID hoặc bấm nút bên cạnh...">
+                                <input type="text" id="zaloBotChatId" style="flex: 1; min-width: 180px;" placeholder="Dán Chat ID hoặc bấm nút bên cạnh..." autocomplete="off">
                                 <button type="button" class="btn btn-zalo" style="white-space: nowrap;" onclick="window.fetchZaloBotChatId()">🔍 Bắt Chat ID Tự Động</button>
                                 <button type="button" class="btn btn-primary" style="white-space: nowrap;" onclick="window.openZaloGetUpdatesTab()">🌐 Mở Link Lấy Chat ID</button>
                             </div>
@@ -130,7 +187,10 @@
                     <div id="zaloOABox" style="display:none;">
                         <div class="input-group">
                             <label>Zalo OA Access Token</label>
-                            <input type="password" id="zaloOAToken" placeholder="Nhập Access Token của Zalo OA...">
+                            <div class="secret-wrap">
+                                <input type="password" id="zaloOAToken" placeholder="Nhập Access Token của Zalo OA..." autocomplete="off">
+                                <button type="button" class="btn btn-zalo btn-xs" onclick="window.toggleSecret('zaloOAToken', this)">👁 Hiện</button>
+                            </div>
                         </div>
                         <div class="input-group">
                             <label>Zalo User ID người nhận (Admin/Chủ quán)</label>
@@ -168,28 +228,16 @@
                     </label>
                     <label class="checkbox-row">
                         <input type="checkbox" id="zaloAutoDailySummary" checked>
-                        <span>📅 Tự động gửi BÁO CÁO TỔNG KẾT CUỐI NGÀY khi mở trang sau <input type="number" id="zaloSummaryHour" value="21" min="0" max="23" style="width:55px; padding:2px 6px; display:inline-block;"> giờ</span>
+                        <span>📅 Tự động gửi BÁO CÁO TỔNG KẾT CUỐI NGÀY lúc <input type="number" id="zaloSummaryHour" value="21" min="0" max="23" style="width:55px; padding:2px 6px; display:inline-block;"> giờ (máy chủ tự kiểm tra mỗi 15 phút)</span>
                     </label>
 
                     <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:14px;">
                         <button class="btn btn-zalo" onclick="window.saveZaloConfig()">💾 Lưu Cấu Hình Zalo</button>
-                        <button class="btn btn-info" onclick="window.testZaloConnection()">🔔 Gửi Test Zalo</button>
-                        <button class="btn btn-danger" onclick="window.pushStockAlertToZalo(true)">⚠️ Báo Hết Nguyên Liệu / Hết Món Ngay</button>
-                        <button class="btn btn-green" onclick="window.pushDailyReportToZalo(true)">📊 Đẩy Báo Cáo Doanh Thu & Món Bán Hôm Nay</button>
+                        <button class="btn btn-primary" onclick="window.runZaloAutoNow()">⚡ Chạy Ngay Các Tác Vụ Tự Động</button>
                     </div>
                 </div>
             </div>
-
-            <div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
-                    <strong style="font-size:0.85rem; color:var(--primary);">Bản xem trước nội dung tin nhắn Zalo gần nhất:</strong>
-                    <div style="display:flex; gap:8px;">
-                        <button class="btn btn-primary" style="padding:4px 10px; font-size:0.78rem;" onclick="window.copyLatestZaloMessage()">📋 Copy Tin Nhắn</button>
-                        <button class="btn btn-zalo" style="padding:4px 10px; font-size:0.78rem;" onclick="window.openZaloDirectChat()">💬 Mở Zalo Dán Gửi Ngay</button>
-                    </div>
-                </div>
-                <div id="zaloMessagePreview" class="zalo-preview-box">Chưa có bản tin nào được tạo. Hãy bấm "Đẩy Báo Cáo Doanh Thu & Món Bán Hôm Nay" hoặc "Báo Hết Nguyên Liệu / Hết Món Ngay" để xem và gửi về Zalo!</div>
-            </div>
+            </div><!-- /#zaloUnlockedView -->
         </div>
 
         <!-- CẤU HÌNH BANNER SỰ KIỆN -->
@@ -262,12 +310,12 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- CẤU HÌNH THANH TOÁN (MÃ QR) -->
         <div class="card">
             <h3>💳 Cấu Hình Thanh Toán</h3>
             <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Trang thanh toán sẽ tự động ưu tiên hiển thị <strong>Ảnh QR tùy chỉnh</strong>. Nếu không có ảnh, hệ thống sẽ hiển thị <strong>Mã VietQR tự động</strong> dựa trên Thông tin ngân hàng.</p>
-            
+
             <div class="grid-2">
                 <div style="background: #faf5ed; padding: 1rem; border-radius: 8px; border: 1px dashed var(--border);">
                     <h4 style="color: var(--primary); margin-bottom: 10px; font-family: 'Merriweather', serif;">1. Thông tin Ngân hàng (Tạo VietQR)</h4>
@@ -320,7 +368,7 @@
         <div class="grid-2">
             <!-- QUẢN LÝ NGUYÊN LIỆU -->
             <div class="card">
-                <h3>📦 Kho Nguyên Liệu 
+                <h3>📦 Kho Nguyên Liệu
                     <button class="btn btn-primary" onclick="window.openIngredientModal()">+ Thêm</button>
                 </h3>
                 <table style="font-size: 0.85rem;">
@@ -348,6 +396,8 @@
     </div>
 
     <!-- CÁC MODAL ẨN -->
+    <div id="modalZaloUnlock" class="modal" style="z-index: 1002;"><div class="modal-content" style="width: 420px;"><div class="modal-header">🔐 Mở Khoá Cấu Hình Zalo</div><p style="font-size:0.82rem; color:#666; margin-bottom:1rem;">Khu vực này chứa Token Bot, Chat ID và Webhook. Nhập mã bảo mật riêng để tiếp tục.</p><div class="input-group"><label>Mã bảo mật Zalo</label><input type="password" id="zuCode" placeholder="Nhập mã bảo mật..." autocomplete="off" onkeydown="if(event.key==='Enter') window.verifyZaloCode()"></div><div id="zuHint" style="display:none; font-size:0.78rem; color:var(--amber); font-weight:700; margin-bottom:1rem;"></div><div style="display: flex; gap: 10px; justify-content: flex-end;"><button class="btn" style="background:#ccc; color:#000;" onclick="window.closeZaloUnlock()">Hủy</button><button class="btn btn-zalo" onclick="window.verifyZaloCode()">🔓 Mở Khoá</button></div></div></div>
+    <div id="modalZaloChangeCode" class="modal" style="z-index: 1002;"><div class="modal-content" style="width: 420px;"><div class="modal-header">🗝️ Đổi Mã Bảo Mật Zalo</div><div class="input-group"><label>Mã bảo mật hiện tại</label><input type="password" id="zcOld" autocomplete="off"></div><div class="input-group"><label>Mã bảo mật mới</label><input type="password" id="zcNew" placeholder="Tối thiểu 6 ký tự" autocomplete="off"></div><div class="input-group"><label>Xác nhận mã mới</label><input type="password" id="zcConfirm" autocomplete="off"></div><div style="display: flex; gap: 10px; justify-content: flex-end;"><button class="btn" style="background:#ccc; color:#000;" onclick="window.closeModals()">Hủy</button><button class="btn btn-accent" onclick="window.changeZaloCode()">Lưu Mã Mới</button></div></div></div>
     <div id="modalForgot" class="modal" style="z-index: 1001;"><div class="modal-content" style="width: 400px;"><div class="modal-header">Khôi Phục Mật Khẩu</div><div class="input-group"><label>Tên đăng nhập</label><input type="text" id="fgUser" placeholder="Nhập tên đăng nhập"></div><div class="input-group"><label>Mã khôi phục</label><input type="text" id="fgCode" placeholder="Nhập mã khôi phục"></div><div class="input-group"><label>Mật khẩu mới</label><input type="password" id="fgNewPass" placeholder="Nhập mật khẩu mới"></div><div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 1.5rem;"><button class="btn" style="background:#ccc; color:#000;" onclick="window.closeModals()">Hủy</button><button class="btn btn-accent" onclick="window.processResetPassword()">Cập nhật</button></div></div></div>
     <div id="modalChangePass" class="modal"><div class="modal-content" style="width: 400px;"><div class="modal-header">Đổi Mật Khẩu Admin</div><div class="input-group"><label>Mật khẩu hiện tại</label><input type="password" id="cpCurrentPass"></div><div class="input-group"><label>Mật khẩu mới</label><input type="password" id="cpNewPass"></div><div class="input-group"><label>Xác nhận mật khẩu mới</label><input type="password" id="cpConfirmPass"></div><div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 1.5rem;"><button class="btn" style="background:#ccc; color:#000;" onclick="window.closeModals()">Hủy</button><button class="btn btn-accent" onclick="window.saveNewPassword()">Lưu Mật Khẩu</button></div></div></div>
     <div id="modalIngredient" class="modal"><div class="modal-content"><div class="modal-header" id="ingModalTitle">Thêm Nguyên Liệu Mới</div><input type="hidden" id="ingEditId"><div class="input-group"><label>Tên Nguyên Liệu</label><input type="text" id="ingName"></div><div class="form-row"><div class="input-group"><label>Số lượng</label><input type="number" id="ingQuantity"></div><div class="input-group"><label>Đơn vị (g, ml...)</label><input type="text" id="ingUnit"></div></div><div class="input-group" id="ingCostGroup"><label>Chi phí nhập ban đầu (VNĐ)</label><input type="number" id="ingCost"></div><div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 1rem;"><button class="btn" style="background:#ccc; color:#000;" onclick="window.closeModals()">Hủy</button><button class="btn btn-accent" onclick="window.saveIngredient()">Lưu Nguyên Liệu</button></div></div></div>
@@ -357,6 +407,13 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
         import { getFirestore, collection, getDocs, doc, getDoc, setDoc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+        import {
+            readyAdmin as medaAuthReady,
+            loginAdmin as medaLogin,
+            logoutAdmin as medaLogout,
+            changeAdminPassword as medaChangePassword,
+            callFn
+        } from "./assets/meda.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAtZN8CGdH0M-OTs9Z2gGCsiA2AWJ0WRXg",
@@ -376,22 +433,33 @@
         let globalOrders = [];
         let globalZaloConfig = {
             mode: 'zalo_bot',
-            botToken: '632062519408110757:vIpdvHwrePfINfHdQEgiXpbvGqYNgHqMKCpZwxndytFjDirKLUXSHRSrqlTlOylb',
-            botChatId: 'zgr-db0e63480a24e37aba35',
+            botToken: '',
+            botChatId: '',
             webhookUrl: '',
             oaAccessToken: '',
             oaRecipientId: '',
             corsProxy: '',
-            phone: '0967196267',
+            phone: '',
             enableAuto: true,
             notifyLowStock: true,
             notifyOutProduct: true,
             notifyOrderDaily: true,
             autoDailySummary: true,
             summaryHour: 21,
-            lastDailySummaryDate: ''
+            lastDailySummaryDate: '',
+            lastDailySummaryAt: 0,
+            zaloCodeHash: ''
         };
         let tempQRBase64 = "";
+
+        // ======== HỆ THỐNG BẢO MẬT KHU VỰC KẾT NỐI ZALO ========
+        const ZALO_CODE_DEFAULT = 'meda2026';   // mã mặc định lần đầu - nên đổi ngay sau khi mở
+        const ZALO_IDLE_MS = 10 * 60 * 1000;  // tự khoá sau 10 phút không thao tác
+
+        let zaloUnlocked = false;
+        let zaloIdleTimer = null;
+        let zaloLastError = '';
+        let zaloCodeBootstrapped = false;
 
         // UI Helpers
         function showLoader() { document.getElementById('globalLoader').style.display = 'flex'; }
@@ -405,11 +473,192 @@
             document.getElementById('zaloOABox').style.display = mode === 'zalo_oa' ? 'block' : 'none';
         }
 
+        // ======== TIỆN ÍCH ========
+        function fmtDate(d) {
+            return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`;
+        }
+        function maskSecret(s) {
+            if (!s) return '(chưa cấu hình)';
+            const str = String(s);
+            if (str.length <= 8) return str.slice(0, 2) + '••••';
+            return str.slice(0, 6) + '••••••••' + str.slice(-4);
+        }
+        async function hashCode(text) {
+            try {
+                if (window.crypto && crypto.subtle && crypto.subtle.digest) {
+                    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('meda::' + text));
+                    return 'sha256:' + Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+                }
+            } catch (e) {}
+            let h1 = 0x811c9dc5, h2 = 0x1000193;
+            for (let i = 0; i < text.length; i++) {
+                h1 = Math.imul(h1 ^ text.charCodeAt(i), 16777619) >>> 0;
+                h2 = Math.imul(h2 + text.charCodeAt(i) * (i + 7), 2654435761) >>> 0;
+            }
+            return 'fb:' + h1.toString(16).padStart(8, '0') + h2.toString(16).padStart(8, '0');
+        }
+        const $ = (id) => document.getElementById(id);
+
+        // ======== KHOÁ / MỞ KHOÁ KHU VỰC KẾT NỐI ZALO ========
+        window.toggleSecret = function(inputId, btn) {
+            const inp = $(inputId);
+            const show = inp.type === 'password';
+            inp.type = show ? 'text' : 'password';
+            btn.textContent = show ? '🙈 Ẩn' : '👁 Hiện';
+            bumpZaloIdle();
+        }
+
+        function applyZaloConfigToDOM() {
+            $('zaloMode').value = globalZaloConfig.mode || 'zalo_bot';
+            $('zaloBotToken').value = '';
+            $('zaloBotChatId').value = globalZaloConfig.botChatId || '';
+            $('zaloWebhookUrl').value = globalZaloConfig.webhookUrl || '';
+            $('zaloOAToken').value = globalZaloConfig.oaAccessToken || '';
+            $('zaloOAUserId').value = globalZaloConfig.oaRecipientId || '';
+            $('zaloCorsProxy').value = globalZaloConfig.corsProxy || '';
+            $('zaloPhone').value = globalZaloConfig.phone || '';
+            $('zaloEnableAuto').checked = globalZaloConfig.enableAuto !== false;
+            $('zaloNotifyLowStock').checked = globalZaloConfig.notifyLowStock !== false;
+            $('zaloNotifyOutProduct').checked = globalZaloConfig.notifyOutProduct !== false;
+            $('zaloNotifyOrderDaily').checked = globalZaloConfig.notifyOrderDaily !== false;
+            $('zaloAutoDailySummary').checked = globalZaloConfig.autoDailySummary !== false;
+            $('zaloSummaryHour').value = globalZaloConfig.summaryHour ?? 21;
+            window.toggleZaloModeUI();
+        }
+
+        function readZaloConfigFromDOM() {
+            return {
+                mode: $('zaloMode').value,
+                botChatId: $('zaloBotChatId').value.trim(),
+                webhookUrl: $('zaloWebhookUrl').value.trim(),
+                oaAccessToken: $('zaloOAToken').value.trim(),
+                oaRecipientId: $('zaloOAUserId').value.trim(),
+                corsProxy: $('zaloCorsProxy').value.trim(),
+                phone: $('zaloPhone').value.trim(),
+                enableAuto: $('zaloEnableAuto').checked,
+                notifyLowStock: $('zaloNotifyLowStock').checked,
+                notifyOutProduct: $('zaloNotifyOutProduct').checked,
+                notifyOrderDaily: $('zaloNotifyOrderDaily').checked,
+                autoDailySummary: $('zaloAutoDailySummary').checked,
+                summaryHour: parseInt($('zaloSummaryHour').value) || 21
+            };
+        }
+
+        // Tóm tắt dạng che kín, hiển thị khi khu vực đang khoá
+        function renderZaloLockedSummary() {
+            const box = $('zaloLockedSummary');
+            if (!box) return;
+            const modeName = { zalo_bot: 'Zalo Bot Creator', webhook: 'Webhook trung gian', zalo_oa: 'Zalo OA API' }[globalZaloConfig.mode] || 'Chưa chọn';
+            const autoOn = globalZaloConfig.enableAuto !== false;
+            const hour = globalZaloConfig.summaryHour ?? 21;
+            const todayStr = fmtDate(new Date());
+            const sentToday = globalZaloConfig.lastDailySummaryDate === todayStr;
+            box.textContent = [
+                `🔐 Phương thức: ${modeName}`,
+                `🔑 Token Bot: ${globalZaloConfig.botTokenSet ? '✅ Đã lưu trên máy chủ (không hiển thị ở đây)' : '❌ Chưa cấu hình'}`,
+                `💬 Chat ID nhận tin: ${maskSecret(globalZaloConfig.botChatId || globalZaloConfig.oaRecipientId)}`,
+                `📞 SĐT mở nhanh Zalo: ${globalZaloConfig.phone ? '••••' + String(globalZaloConfig.phone).slice(-4) : '(chưa có)'}`,
+                `🔄 Tự động: ${autoOn ? '🟢 ĐANG BẬT' : '🔴 ĐANG TẮT'} · Báo cáo tổng kết lúc ${hour}:00 hằng ngày`,
+                `   ├ Đơn mới: ${globalZaloConfig.notifyOrderDaily !== false ? '✅' : '❌'} · Hết nguyên liệu: ${globalZaloConfig.notifyLowStock !== false ? '✅' : '❌'} · Hết món: ${globalZaloConfig.notifyOutProduct !== false ? '✅' : '❌'}`,
+                `📅 Báo cáo gần nhất: ${globalZaloConfig.lastDailySummaryDate ? globalZaloConfig.lastDailySummaryDate + (sentToday ? ' (hôm nay ✅)' : '') : 'Chưa có'}`,
+                `📱 Nơi chạy: máy chủ 24/7 (không cần mở trang này)`
+            ].join('\n');
+        }
+
+        function bumpZaloIdle() {
+            if (!zaloUnlocked) return;
+            clearTimeout(zaloIdleTimer);
+            zaloIdleTimer = setTimeout(() => {
+                if (zaloUnlocked) { window.lockZaloPanel(true); }
+            }, ZALO_IDLE_MS);
+        }
+
+        window.lockZaloPanel = function(autoLock = false) {
+            zaloUnlocked = false;
+            clearTimeout(zaloIdleTimer);
+            sessionStorage.removeItem('meda_zalo_unlocked');
+            ['zaloBotToken', 'zaloOAToken', 'zaloWebhookUrl', 'zaloCorsProxy', 'zaloBotChatId', 'zaloOAUserId'].forEach(id => { const el = $(id); if (el) el.value = ''; });
+            $('zaloUnlockedView').style.display = 'none';
+            $('zaloLockedView').style.display = 'block';
+            renderZaloLockedSummary();
+            updateZaloBadgeUI();
+            if (autoLock) alert("🔒 Đã tự động khoá lại phần cấu hình Zalo sau 10 phút không thao tác.\n(Hệ thống vẫn tự gửi báo cáo bình thường.)");
+        }
+
+        window.unlockZaloPanel = function() {
+            zaloUnlocked = true;
+            sessionStorage.setItem('meda_zalo_unlocked', 'true');
+            applyZaloConfigToDOM();
+            $('zaloUnlockedView').style.display = 'block';
+            $('zaloLockedView').style.display = 'none';
+            updateZaloBadgeUI();
+            bumpZaloIdle();
+        }
+
+        window.openZaloUnlockModal = function() {
+            $('zuCode').value = '';
+            $('modalZaloUnlock').style.display = 'flex';
+            if (zaloCodeBootstrapped) {
+                const hint = $('zuHint');
+                hint.style.display = 'block';
+                hint.textContent = `⚠️ Lần đầu tiên mở phần này — mã bảo mật mặc định là "${ZALO_CODE_DEFAULT}". Hãy nhập mã này, sau đó bấm "🗝️ Đổi Mã Bảo Mật" để đặt mã riêng của bạn.`;
+            } else {
+                $('zuHint').style.display = 'none';
+            }
+            setTimeout(() => $('zuCode').focus(), 60);
+        }
+
+        window.closeZaloUnlock = function() { $('modalZaloUnlock').style.display = 'none'; }
+
+        window.verifyZaloCode = async function() {
+            const code = ($('zuCode').value || '').trim();
+            if (!code) return alert("Vui lòng nhập mã bảo mật Zalo!");
+            const inputHash = await hashCode(code);
+            if (globalZaloConfig.zaloCodeHash && inputHash === globalZaloConfig.zaloCodeHash) {
+                window.closeZaloUnlock();
+                window.unlockZaloPanel();
+                alert("🔓 Đã mở khoá cấu hình Zalo. Phần này sẽ tự khoá lại sau 10 phút không thao tác.");
+            } else {
+                $('zuCode').value = '';
+                alert("❌ Sai mã bảo mật Zalo!");
+            }
+        }
+
+        window.openZaloChangeCodeModal = function() {
+            if (!zaloUnlocked) return alert("Vui lòng mở khoá phần cấu hình trước!");
+            $('zcOld').value = ''; $('zcNew').value = ''; $('zcConfirm').value = '';
+            $('modalZaloChangeCode').style.display = 'flex';
+        }
+
+        window.changeZaloCode = async function() {
+            const oldC = ($('zcOld').value || '').trim();
+            const newC = ($('zcNew').value || '').trim();
+            const confirmC = ($('zcConfirm').value || '').trim();
+            if (await hashCode(oldC) !== globalZaloConfig.zaloCodeHash) return alert("❌ Mã bảo mật hiện tại không đúng!");
+            if (newC.length < 6) return alert("⚠️ Mã mới phải có ít nhất 6 ký tự!");
+            if (newC !== confirmC) return alert("⚠️ Xác nhận mã mới không khớp!");
+            const newHash = await hashCode(newC);
+            globalZaloConfig.zaloCodeHash = newHash;
+            await setDoc(doc(db, "config", "zalo"), { zaloCodeHash: newHash }, { merge: true }).catch(() => {});
+            zaloCodeBootstrapped = false;
+            window.closeModals();
+            alert("🗝️ Đã đổi mã bảo mật Zalo thành công!");
+        }
+
+        // Gắn sự kiện chống rò rỉ khi khoá
+        document.addEventListener('DOMContentLoaded', () => {
+            const view = $('zaloUnlockedView');
+            if (view) {
+                ['click', 'keyup', 'input', 'change'].forEach(evt =>
+                    view.addEventListener(evt, bumpZaloIdle, true));
+            }
+        });
+
         function updateZaloBadgeUI() {
-            const badge = document.getElementById('zaloStatusBadge');
-            const isConfigured = (globalZaloConfig.mode === 'zalo_bot' && globalZaloConfig.botToken && globalZaloConfig.botChatId) ||
+            const badge = $('zaloStatusBadge');
+            const isConfigured = (globalZaloConfig.mode === 'zalo_bot' && globalZaloConfig.botTokenSet && globalZaloConfig.botChatId) ||
                                  (globalZaloConfig.mode === 'webhook' && globalZaloConfig.webhookUrl) ||
-                                 (globalZaloConfig.mode === 'zalo_oa' && globalZaloConfig.oaAccessToken && globalZaloConfig.oaRecipientId);
+                                 (globalZaloConfig.mode === 'zalo_oa' && globalZaloConfig.oaTokenSet && globalZaloConfig.oaRecipientId);
             if (isConfigured && globalZaloConfig.enableAuto) {
                 badge.textContent = "🟢 Đang hoạt động tự động";
                 badge.style.background = "#E8F5E9";
@@ -423,56 +672,80 @@
                 badge.style.background = "#E3F2FD";
                 badge.style.color = "var(--zalo)";
             }
+            badge.textContent = (zaloUnlocked ? "🔓 " : "🔒 ") + badge.textContent;
         }
 
         // BẢO MẬT & ĐĂNG NHẬP
-        if (sessionStorage.getItem('meda_admin_logged_in') === 'true') {
-            document.getElementById('loginOverlay').style.display = 'none';
-            loadAllData();
-        }
+        (async function bootAdmin() {
+            try {
+                const u = await medaAuthReady();
+                if (u) {
+                    document.getElementById('loginOverlay').style.display = 'none';
+                    loadAllData();
+                }
+            } catch (e) { /* chưa đăng nhập -> hiện màn hình login */ }
+        })();
 
-        window.loginAdmin = function() {
-            const currentPass = localStorage.getItem('meda_admin_pass') || '123456';
-            if (document.getElementById('adminUser').value === 'admin' && document.getElementById('adminPass').value === currentPass) {
-                sessionStorage.setItem('meda_admin_logged_in', 'true');
+        window.loginAdmin = async function() {
+            const pass = document.getElementById('adminPass').value;
+            if (!pass) return alert("Vui lòng nhập mật khẩu!");
+            try {
+                await medaLogin(pass);
                 document.getElementById('loginOverlay').style.display = 'none';
                 loadAllData();
-            } else { alert("Sai tài khoản hoặc mật khẩu!"); }
+            } catch (e) {
+                alert((e && e.message) ? e.message : "Sai tài khoản hoặc mật khẩu!");
+            }
         }
 
-        window.logoutAdmin = function() { sessionStorage.removeItem('meda_admin_logged_in'); window.location.reload(); }
-        window.openForgotModal = function() { document.getElementById('modalForgot').style.display = 'flex'; }
-        window.processResetPassword = function() {
-            const user = document.getElementById('fgUser').value;
-            const code = document.getElementById('fgCode').value;
-            const newPass = document.getElementById('fgNewPass').value;
-            if (user === 'admin' && code === 'meda') {
-                if (newPass.length < 6) return alert("Mật khẩu phải có ít nhất 6 ký tự!");
-                localStorage.setItem('meda_admin_pass', newPass);
-                alert("Đổi mật khẩu thành công!");
-                window.closeModals();
-            } else { alert("Sai thông tin!"); }
+        window.logoutAdmin = function() { medaLogout(); }
+
+        window.openForgotModal = function() {
+            document.getElementById('fgUser').value = 'admin';
+            document.getElementById('fgCode').value = '';
+            document.getElementById('fgNewPass').value = '';
+            document.getElementById('modalForgot').style.display = 'flex';
+        }
+        window.processResetPassword = async function() {
+            const code = (document.getElementById('fgCode').value || '').trim();
+            const newPass = (document.getElementById('fgNewPass').value || '').trim();
+            if (code !== 'meda' && code !== 'meda2026') {
+                return alert('❌ Mã khôi phục không đúng! (Mã mặc định: meda2026)');
+            }
+            if (newPass.length < 6) {
+                return alert('⚠️ Mật khẩu mới phải có ít nhất 6 ký tự!');
+            }
+            const raw = 'meda_admin::' + newPass;
+            const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(raw));
+            const passHash = 'sha256:' + Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+            await setDoc(doc(db, 'config', 'admin'), { passHash, updatedAt: Date.now() }, { merge: true });
+            window.closeModals();
+            alert('✅ Đã đặt lại mật khẩu thành công! Hãy đăng nhập bằng mật khẩu mới.');
         }
         window.openChangePassModal = function() { document.getElementById('modalChangePass').style.display = 'flex'; }
-        window.saveNewPassword = function() {
-            const currentSavedPass = localStorage.getItem('meda_admin_pass') || '123456';
-            if (document.getElementById('cpCurrentPass').value !== currentSavedPass) return alert("Mật khẩu hiện tại sai!");
+        window.saveNewPassword = async function() {
+            const oldPass = document.getElementById('cpCurrentPass').value;
             const newPass = document.getElementById('cpNewPass').value;
-            if (newPass.length < 6 || newPass !== document.getElementById('cpConfirmPass').value) return alert("Mật khẩu mới không hợp lệ hoặc không khớp!");
-            localStorage.setItem('meda_admin_pass', newPass);
-            alert("Đổi mật khẩu thành công!");
-            window.logoutAdmin();
+            if (newPass.length < 6 || newPass !== document.getElementById('cpConfirmPass').value) {
+                return alert("Mật khẩu mới không hợp lệ hoặc không khớp!");
+            }
+            try {
+                await medaChangePassword(oldPass, newPass);
+                alert("Đổi mật khẩu thành công! Vui lòng đăng nhập lại.");
+                medaLogout();
+            } catch (e) {
+                alert("❌ " + ((e && e.message) ? e.message : 'Đổi mật khẩu thất bại.'));
+            }
         }
 
         // TẢI TOÀN BỘ DỮ LIỆU TỪ CLOUD
         async function loadAllData() {
             showLoader();
             try {
-                const [eventSnap, bankSnap, finSnap, zaloSnap, invSnap, prodSnap, ordersSnap] = await Promise.all([
+                const [eventSnap, bankSnap, finSnap, invSnap, prodSnap, ordersSnap] = await Promise.all([
                     getDoc(doc(db, "config", "event")),
                     getDoc(doc(db, "config", "bank")),
                     getDoc(doc(db, "config", "finance")),
-                    getDoc(doc(db, "config", "zalo")),
                     getDocs(collection(db, "inventory")),
                     getDocs(collection(db, "products")),
                     getDocs(collection(db, "orders"))
@@ -507,320 +780,81 @@
                 document.getElementById('finIng').value = finData.ingredientCosts || 0;
                 window.calculateProfitUI();
 
-                // 4. Tải Cấu hình Zalo
-                if(zaloSnap.exists()) {
-                    const cloudZalo = zaloSnap.data();
-                    globalZaloConfig = { ...globalZaloConfig, ...cloudZalo };
-                    if (!globalZaloConfig.botToken) {
-                        globalZaloConfig.botToken = '632062519408110757:vIpdvHwrePfINfHdQEgiXpbvGqYNgHqMKCpZwxndytFjDirKLUXSHRSrqlTlOylb';
-                    }
-                    if (!cloudZalo.webhookUrl && !cloudZalo.oaAccessToken) {
-                        globalZaloConfig.mode = 'zalo_bot';
-                    }
+                // 4. Cấu hình Zalo
+                const zaloCodeSnap = await getDoc(doc(db, "config", "zalo")).catch(() => null);
+                if (zaloCodeSnap && zaloCodeSnap.exists() && zaloCodeSnap.data().zaloCodeHash) {
+                    globalZaloConfig.zaloCodeHash = zaloCodeSnap.data().zaloCodeHash;
+                } else {
+                    globalZaloConfig.zaloCodeHash = await hashCode(ZALO_CODE_DEFAULT);
+                    zaloCodeBootstrapped = true;
+                    await setDoc(doc(db, "config", "zalo"), { zaloCodeHash: globalZaloConfig.zaloCodeHash }, { merge: true }).catch(() => {});
                 }
-                document.getElementById('zaloMode').value = globalZaloConfig.mode || 'zalo_bot';
-                document.getElementById('zaloBotToken').value = globalZaloConfig.botToken || '';
-                document.getElementById('zaloBotChatId').value = globalZaloConfig.botChatId || 'zgr-db0e63480a24e37aba35';
-                document.getElementById('zaloWebhookUrl').value = globalZaloConfig.webhookUrl || '';
-                document.getElementById('zaloOAToken').value = globalZaloConfig.oaAccessToken || '';
-                document.getElementById('zaloOAUserId').value = globalZaloConfig.oaRecipientId || '';
-                document.getElementById('zaloCorsProxy').value = globalZaloConfig.corsProxy || '';
-                document.getElementById('zaloPhone').value = globalZaloConfig.phone || '0967196267';
-                document.getElementById('zaloEnableAuto').checked = globalZaloConfig.enableAuto !== false;
-                document.getElementById('zaloNotifyLowStock').checked = globalZaloConfig.notifyLowStock !== false;
-                document.getElementById('zaloNotifyOutProduct').checked = globalZaloConfig.notifyOutProduct !== false;
-                document.getElementById('zaloNotifyOrderDaily').checked = globalZaloConfig.notifyOrderDaily !== false;
-                document.getElementById('zaloAutoDailySummary').checked = globalZaloConfig.autoDailySummary !== false;
-                document.getElementById('zaloSummaryHour').value = globalZaloConfig.summaryHour ?? 21;
-                window.toggleZaloModeUI();
+                if (zaloUnlocked) applyZaloConfigToDOM();
                 updateZaloBadgeUI();
+                renderZaloLockedSummary();
+                updateZaloAutoInfoUI();
 
                 // 5. Tải Inventory, Products & Orders
                 globalInventory = invSnap.docs.map(d => d.data());
                 globalProducts = prodSnap.docs.map(d => { let p = d.data(); p.id = d.id; return p; });
                 globalOrders = ordersSnap.docs.map(d => d.data());
-                
+
                 renderInventory();
 
-                // Kiểm tra tự động đẩy báo cáo tổng kết cuối ngày nếu đã qua giờ hẹn
-                checkAndAutoSendDailyZalo();
+                if (sessionStorage.getItem('meda_zalo_unlocked') === 'true') {
+                    window.unlockZaloPanel();
+                } else {
+                    renderZaloLockedSummary();
+                }
 
-            } catch(e) { 
-                console.error(e); 
-                alert("Lỗi khi tải dữ liệu từ Đám mây."); 
+                startZaloAutomation();
+
+            } catch(e) {
+                console.error(e);
+                alert("Lỗi khi tải dữ liệu từ Đám mây.");
             }
             hideLoader();
         }
 
         // ==================== HỆ THỐNG ĐẨY TIN NHẮN VỀ ZALO ====================
-        window.saveZaloConfig = async function() {
-            showLoader();
-            globalZaloConfig = {
-                ...globalZaloConfig,
-                mode: document.getElementById('zaloMode').value,
-                botToken: document.getElementById('zaloBotToken').value.trim(),
-                botChatId: document.getElementById('zaloBotChatId').value.trim(),
-                webhookUrl: document.getElementById('zaloWebhookUrl').value.trim(),
-                oaAccessToken: document.getElementById('zaloOAToken').value.trim(),
-                oaRecipientId: document.getElementById('zaloOAUserId').value.trim(),
-                corsProxy: document.getElementById('zaloCorsProxy').value.trim(),
-                phone: document.getElementById('zaloPhone').value.trim(),
-                enableAuto: document.getElementById('zaloEnableAuto').checked,
-                notifyLowStock: document.getElementById('zaloNotifyLowStock').checked,
-                notifyOutProduct: document.getElementById('zaloNotifyOutProduct').checked,
-                notifyOrderDaily: document.getElementById('zaloNotifyOrderDaily').checked,
-                autoDailySummary: document.getElementById('zaloAutoDailySummary').checked,
-                summaryHour: parseInt(document.getElementById('zaloSummaryHour').value) || 21
-            };
-            await setDoc(doc(db, "config", "zalo"), globalZaloConfig);
-            updateZaloBadgeUI();
-            hideLoader();
-            alert("Đã lưu cấu hình kết nối Zalo lên Đám mây!");
-        }
-
-        // Hàm gọi API Zalo Bot Platform (bot-api.zapps.me) hỗ trợ đa luồng (Direct + GET + Proxy + Form no-cors)
-        async function callZaloBotPlatformAPI(token, method, payloadObj = null) {
-            const targetUrl = `https://bot-api.zapps.me/bot${token}/${method}`;
-            const queryParams = payloadObj ? new URLSearchParams(payloadObj).toString() : '';
-            const targetUrlWithQuery = queryParams ? `${targetUrl}?${queryParams}` : targetUrl;
-
-            const postOptions = payloadObj ? {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payloadObj)
-            } : { method: 'GET' };
-
-            // 1. Thử gọi trực tiếp tới bot-api.zapps.me (POST JSON)
+        window.saveZaloConfig = async function(silent = false) {
+            if (!silent) showLoader();
             try {
-                const res = await fetch(targetUrl, postOptions);
-                if (res.ok) return await res.json();
-            } catch (e1) {}
+                const payload = zaloUnlocked ? readZaloConfigFromDOM() : {};
+                const res = await callFn('saveZaloConfig', payload);
+                globalZaloConfig = { ...globalZaloConfig, ...(res.config || {}) };
 
-            // 2. Thử gọi trực tiếp bằng GET query (tránh preflight CORS)
-            try {
-                const resGet = await fetch(targetUrlWithQuery, { method: 'GET' });
-                if (resGet.ok) return await resGet.json();
-            } catch (e2) {}
-
-            // 3. Thử qua CORS Proxy 1 (corsproxy.io)
-            try {
-                const proxy1 = `https://corsproxy.io/?${encodeURIComponent(targetUrlWithQuery)}`;
-                const resP1 = await fetch(proxy1, postOptions);
-                if (resP1.ok) return await resP1.json();
-            } catch (e3) {}
-
-            // 4. Thử qua CORS Proxy 2 (allorigins.win - dùng cho getUpdates)
-            if (method === 'getUpdates') {
-                try {
-                    const proxy2 = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrlWithQuery + '&_t=' + Date.now())}`;
-                    const resP2 = await fetch(proxy2);
-                    if (resP2.ok) return await resP2.json();
-                } catch (e4) {}
-            }
-
-            // 5. Nếu là lệnh sendMessage, dùng Simple Form POST (no-cors) luôn gửi đi thành công 100% từ trình duyệt
-            if (method === 'sendMessage' && payloadObj) {
-                const formBody = new URLSearchParams();
-                formBody.append('chat_id', payloadObj.chat_id);
-                formBody.append('text', payloadObj.text);
-                await fetch(targetUrl, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: formBody.toString()
-                });
-                return { ok: true, fallback: true };
-            }
-
-            return { ok: false, description: "Không kết nối được tới máy chủ Zalo Bot." };
-        }
-
-        // Hàm đệ quy tìm kiếm Chat ID trong mọi cấu trúc JSON trả về từ Zalo Bot API
-        function extractChatIdDeep(obj) {
-            if (!obj || typeof obj !== 'object') return null;
-            if (obj.chat && (obj.chat.id || obj.chat.chat_id)) {
-                return {
-                    id: String(obj.chat.id || obj.chat.chat_id),
-                    name: obj.from?.display_name || obj.from?.first_name || obj.from?.name || obj.chat?.title || ""
-                };
-            }
-            if (obj.sender && obj.sender.id) {
-                return { id: String(obj.sender.id), name: obj.sender.name || "" };
-            }
-            if (obj.from && obj.from.id) {
-                return { id: String(obj.from.id), name: obj.from.display_name || obj.from.name || "" };
-            }
-            if (obj.chat_id) {
-                return { id: String(obj.chat_id), name: "" };
-            }
-            if (Array.isArray(obj)) {
-                // Duyệt từ phần tử mới nhất trở về trước
-                for (let i = obj.length - 1; i >= 0; i--) {
-                    const found = extractChatIdDeep(obj[i]);
-                    if (found) return found;
+                if (zaloUnlocked) {
+                    const typed = ($('zaloBotToken').value || '').trim();
+                    if (typed) await callFn('setZaloToken', { token: typed });
                 }
-            } else {
-                for (const key of Object.keys(obj)) {
-                    if (key === 'ok' || key === 'error_code') continue;
-                    const found = extractChatIdDeep(obj[key]);
-                    if (found) return found;
-                }
-            }
-            return null;
-        }
+                $('zaloBotToken').value = '';
 
-        // Mở trang lấy Chat ID trực tiếp trên trình duyệt (Cách chắc chắn 100% không bao giờ bị lỗi CORS)
-        window.openZaloGetUpdatesTab = function() {
-            const token = document.getElementById('zaloBotToken').value.trim();
-            if (!token) return alert("Vui lòng dán Zalo Bot Token vào ô số 1 trước!");
-            const url = `https://bot-api.zapps.me/bot${token}/getUpdates?timeout=20`;
-            window.open(url, '_blank');
-        }
-
-        // Tự động lắng nghe tin nhắn mới (Long Polling 20 giây) để bắt ngay Chat ID khi bạn nhắn tin cho Bot
-        window.fetchZaloBotChatId = async function() {
-            const token = document.getElementById('zaloBotToken').value.trim();
-            if (!token) {
-                return alert("Vui lòng dán Zalo Bot Token vào ô số 1 trước!");
-            }
-
-            const loader = document.getElementById('globalLoader');
-            const oldLoaderText = loader.textContent;
-            loader.innerHTML = `<div style="text-align:center; background:#fff; padding:24px 32px; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.2); border:2px solid #0068FF; max-width:480px;">
-                <div style="font-size:1.3rem; color:#0068FF; margin-bottom:10px;">📡 Đang chờ bạn nhắn tin trên Zalo (20 giây)...</div>
-                <p style="font-size:0.95rem; color:#333; font-weight:500; line-height:1.5;">
-                    Ngay bây giờ, bạn hãy cầm điện thoại lên và gửi 1 tin nhắn bất kỳ (ví dụ: <b>"alo"</b>) vào <b>Bot MÊ ĐÁ Assistant</b> nhé!<br>
-                    <span style="font-size:0.82rem; color:#666;">(Do tin nhắn cũ lúc 19:00 đã hết hạn trong bộ nhớ tạm của Zalo, bạn chỉ cần nhắn 1 tin mới ngay lúc này là web sẽ bắt được liền!)</span>
-                </p>
-            </div>`;
-            loader.style.display = 'flex';
-
-            try {
-                // Thử lấy ngay trong hàng đợi (timeout = 1) trước, nếu chưa có thì bật Long-Polling chờ 18 giây
-                let res = await callZaloBotPlatformAPI(token, 'getUpdates', { timeout: 1 });
-                let found = res && res.ok ? extractChatIdDeep(res.result) : null;
-
-                if (!found) {
-                    res = await callZaloBotPlatformAPI(token, 'getUpdates', { timeout: 18 });
-                    found = res && res.ok ? extractChatIdDeep(res.result) : null;
-                }
-
-                loader.textContent = oldLoaderText;
-                hideLoader();
-
-                if (found && found.id) {
-                    document.getElementById('zaloBotChatId').value = found.id;
-                    await window.saveZaloConfig();
-                    alert(`🎉 Bắt được Chat ID thành công: ${found.id} ${found.name ? '(' + found.name + ')' : ''}!
-
-Bây giờ bạn hãy bấm nút "🔔 Gửi Test Zalo" để nhận tin nhắn từ Bot nhé!`);
-                } else {
-                    const rawStr = JSON.stringify(res || {});
-                    document.getElementById('zaloMessagePreview').textContent = `Kết quả trả về từ Zalo Bot API:
-${rawStr}
-
-👉 HƯỚNG DẪN LẤY CHAT ID TRỰC TIẾP TRONG 5 GIÂY:
-1. Bấm nút "🌐 Mở Link Lấy Chat ID" màu tím ở ngay phía trên.
-2. Một tab mới sẽ mở ra và chờ xoay vòng, lúc đó bạn nhắn chữ "alo" vào Bot trên điện thoại.
-3. Tab đó sẽ hiện ra dòng chữ có dạng: "chat":{"id":"..."} -> Bạn copy dãy số id đó dán vào ô số 2 (Chat ID) là xong!`;
-                    alert("⚠️ Chưa bắt được tin nhắn mới trong 20 giây vừa rồi (hoặc trình duyệt chặn đọc dữ liệu)! 👉 Bạn hãy bấm nút '🌐 Mở Link Lấy Chat ID' ngay cạnh ô Chat ID, sau đó nhắn 'alo' trên Zalo để nhìn thấy trực tiếp mã Chat ID nhé!");
-                }
+                updateZaloBadgeUI();
+                renderZaloLockedSummary();
+                updateZaloAutoInfoUI();
+                if (!silent) alert("Đã lưu cấu hình kết nối Zalo lên máy chủ!");
             } catch (e) {
-                loader.textContent = oldLoaderText;
-                hideLoader();
-                alert("⚠️ Trình duyệt chặn đọc dữ liệu trực tiếp. Bạn hãy bấm nút '🌐 Mở Link Lấy Chat ID' bên cạnh ô số 2 để lấy mã Chat ID trực tiếp trên tab mới nhé!");
+                if (!silent) alert("❌ Không lưu được cấu hình: " + ((e && e.message) || e));
+            } finally {
+                if (!silent) hideLoader();
             }
         }
 
-        // Hàm gửi tin nhắn tới Zalo (Hỗ trợ Zalo Bot Creator, Webhook & Zalo OA API)
-        async function sendToZalo(messageText, eventType = "general", structuredData = {}) {
-            document.getElementById('zaloMessagePreview').textContent = messageText;
-
-            const mode = globalZaloConfig.mode || 'zalo_bot';
+        async function fetchZaloConfigFromServer() {
             try {
-                if (mode === 'zalo_bot') {
-                    const tokenInput = document.getElementById('zaloBotToken')?.value?.trim();
-                    const chatIdInput = document.getElementById('zaloBotChatId')?.value?.trim();
-                    const token = tokenInput || globalZaloConfig.botToken || '632062519408110757:vIpdvHwrePfINfHdQEgiXpbvGqYNgHqMKCpZwxndytFjDirKLUXSHRSrqlTlOylb';
-                    const chatId = chatIdInput || globalZaloConfig.botChatId || 'zgr-db0e63480a24e37aba35';
-                    if (!token || !chatId) {
-                        return { ok: false, reason: "Vui lòng nhập Token và Chat ID." };
-                    }
-                    // Đồng bộ exactamente giống hệt cách gửi của trang baocao.html và donhang.html
-                    const targetUrl = `https://bot-api.zapps.me/bot${token}/sendMessage`;
-                    const formBody = new URLSearchParams();
-                    formBody.append('chat_id', chatId);
-                    formBody.append('text', messageText);
-                    
-                    await fetch(targetUrl, {
-                        method: 'POST',
-                        mode: 'no-cors',
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: formBody.toString()
-                    });
-                    return { ok: true };
-                } else if (mode === 'webhook') {
-                    const url = globalZaloConfig.webhookUrl;
-                    if (!url) {
-                        return { ok: false, reason: "Chưa nhập Webhook URL. Bạn vẫn có thể bấm 'Copy Tin Nhắn' hoặc 'Mở Zalo Dán Gửi Ngay' bên dưới." };
-                    }
-                    const payload = {
-                        shop: "Mê Đá",
-                        type: eventType,
-                        timestamp: new Date().toLocaleString('vi-VN'),
-                        message: messageText,
-                        text: messageText,
-                        content: messageText,
-                        data: structuredData
-                    };
-                    try {
-                        const res = await fetch(url, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(payload)
-                        });
-                        return { ok: res.ok };
-                    } catch (corsErr) {
-                        await fetch(url, {
-                            method: 'POST',
-                            mode: 'no-cors',
-                            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                            body: JSON.stringify(payload)
-                        });
-                        return { ok: true, mode: 'no-cors' };
-                    }
-                } else if (mode === 'zalo_oa') {
-                    const token = globalZaloConfig.oaAccessToken;
-                    const userId = globalZaloConfig.oaRecipientId;
-                    if (!token || !userId) {
-                        return { ok: false, reason: "Chưa nhập đủ Zalo OA Access Token và User ID người nhận." };
-                    }
-                    const oaEndpoint = globalZaloConfig.corsProxy || "https://openapi.zalo.me/v3.0/oa/message/cs";
-                    const oaPayload = {
-                        recipient: { user_id: userId },
-                        message: { text: messageText }
-                    };
-                    const res = await fetch(oaEndpoint, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'access_token': token
-                        },
-                        body: JSON.stringify(oaPayload)
-                    });
-                    const json = await res.json().catch(() => ({}));
-                    if (json.error && json.error !== 0) {
-                        return { ok: false, reason: json.message || ("Mã lỗi Zalo OA: " + json.error) };
-                    }
-                    return { ok: true };
-                }
-            } catch (err) {
-                console.error("Lỗi đẩy Zalo:", err);
-                return { ok: false, reason: err.message };
+                const cfg = await callFn('getZaloConfig', {});
+                globalZaloConfig = { ...globalZaloConfig, ...cfg };
+                if (zaloUnlocked) applyZaloConfigToDOM();
+                updateZaloBadgeUI();
+                renderZaloLockedSummary();
+                updateZaloAutoInfoUI();
+            } catch (e) {
+                zaloLastError = 'Không đọc được cấu hình Zalo: ' + ((e && e.message) || e);
+                updateZaloAutoInfoUI();
             }
         }
 
-        // Tính số ly tối đa của 1 món dựa trên kho hiện tại
         function calcProductMaxCups(p, invList) {
             if (!p.recipe || p.recipe.length === 0) return 999;
             let maxCups = Infinity;
@@ -832,198 +866,181 @@ ${rawStr}
             return maxCups === Infinity ? 0 : maxCups;
         }
 
-        // Tạo nội dung cảnh báo Hết nguyên liệu & Hết món
-        function buildStockAlertReport() {
-            const outIngredients = [];
-            const lowIngredients = [];
-            globalInventory.forEach(ing => {
-                if (ing.quantity <= 0) outIngredients.push(`- ❌ ${ing.name}: HẾT SẠCH (0 ${ing.unit})`);
-                else if (ing.quantity <= 50) lowIngredients.push(`- ⚠️ ${ing.name}: Còn ${ing.quantity} ${ing.unit}`);
-            });
-
-            const outProducts = [];
-            const lowProducts = [];
-            globalProducts.forEach(p => {
-                const cups = calcProductMaxCups(p, globalInventory);
-                if (cups <= 0) outProducts.push(`- 🚫 ${p.name}: HẾT MÓN (0 ly)`);
-                else if (cups <= 5) lowProducts.push(`- ⏳ ${p.name}: Chỉ còn pha được ${cups} ly`);
-            });
-
-            const nowStr = new Date().toLocaleString('vi-VN');
-            let lines = [
-                `🚨 [MÊ ĐÁ] BÁO CÁO KHO & MÓN`,
-                `🕒 Thời gian: ${nowStr}`,
-                `------------------------`,
-                `📦 1. TÌNH TRẠNG NGUYÊN LIỆU:`
-            ];
-
-            if (outIngredients.length === 0 && lowIngredients.length === 0) {
-                lines.push(`✅ Tất cả nguyên liệu đều đầy đủ.`);
-            } else {
-                if (outIngredients.length > 0) lines.push(...outIngredients);
-                if (lowIngredients.length > 0) lines.push(...lowIngredients);
-            }
-
-            lines.push(`------------------------`);
-            lines.push(`☕ 2. TÌNH TRẠNG MÓN TRÊN MENU:`);
-            if (outProducts.length === 0 && lowProducts.length === 0) {
-                lines.push(`✅ Tất cả các món đều sẵn sàng phục vụ.`);
-            } else {
-                if (outProducts.length > 0) lines.push(...outProducts);
-                if (lowProducts.length > 0) lines.push(...lowProducts);
-            }
-
-            return {
-                hasAlert: outIngredients.length > 0 || lowIngredients.length > 0 || outProducts.length > 0 || lowProducts.length > 0,
-                text: lines.join('\n'),
-                data: { outIngredients, lowIngredients, outProducts, lowProducts }
-            };
+        function buildStockPreviewText() {
+            const outIngs = globalInventory.filter(i => i.quantity <= 0).map(i => `- ❌ ${i.name}: HẾT SẠCH (0 ${i.unit})`);
+            const lowIngs = globalInventory.filter(i => i.quantity > 0 && i.quantity <= 50).map(i => `- ⚠️ ${i.name}: Sắp hết (${i.quantity} ${i.unit})`);
+            const outProds = globalProducts.filter(p => calcProductMaxCups(p, globalInventory) === 0).map(p => `- 🚫 ${p.name}: HẾT MÓN (0 ly)`);
+            return [
+                `⚠️ [MÊ ĐÁ] BÁO CÁO KHO NGUYÊN LIỆU & MÓN (${fmtDate(new Date())})`,
+                `========================`,
+                ...(outIngs.length || lowIngs.length || outProds.length
+                    ? [...outIngs, ...lowIngs, ...outProds]
+                    : [`✅ Tất cả nguyên liệu và món đều còn đủ.`])
+            ].join('\n');
         }
 
-        // Tạo nội dung báo cáo Số tiền chi tiết hàng ngày & Bán được những gì
-        function buildDailySalesReport(targetDateStr = null) {
-            const now = new Date();
-            const todayStr = targetDateStr || `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()}`;
-
+        function buildDailyPreviewText() {
+            const todayStr = fmtDate(new Date());
             const todayOrders = globalOrders.filter(o => o.createdAt && o.createdAt.includes(todayStr));
-
-            let dailyRevenue = 0;
-            let totalCups = 0;
-            let dineInCount = 0;
-            let takeAwayCount = 0;
-            const itemSummary = {};
-
-            todayOrders.forEach(order => {
-                dailyRevenue += (order.total || 0);
-                if (order.orderType === 'Tại chỗ') dineInCount++;
-                else takeAwayCount++;
-
-                if (order.items && Array.isArray(order.items)) {
-                    order.items.forEach(it => {
-                        const key = it.id || it.name;
-                        if (!itemSummary[key]) {
-                            itemSummary[key] = { name: it.name, qty: 0, amount: 0, price: it.price || 0 };
-                        }
-                        itemSummary[key].qty += it.quantity;
-                        itemSummary[key].amount += (it.price * it.quantity);
-                        totalCups += it.quantity;
+            let dailyRev = 0, dailyCups = 0;
+            const soldMap = {};
+            todayOrders.forEach(o => {
+                dailyRev += (o.total || 0);
+                if (o.items && Array.isArray(o.items)) {
+                    o.items.forEach(it => {
+                        const k = it.id || it.name;
+                        if (!soldMap[k]) soldMap[k] = { name: it.name, qty: 0, rev: 0 };
+                        soldMap[k].qty += it.quantity;
+                        soldMap[k].rev += (it.price * it.quantity);
+                        dailyCups += it.quantity;
                     });
                 }
             });
-
-            const totalAllTimeRev = parseFloat(document.getElementById('finRevenue').value) || 0;
-            const ingCost = parseFloat(document.getElementById('finIng').value) || 0;
-            const fixedCost = parseFloat(document.getElementById('finFixed').value) || 0;
-            const totalCost = ingCost + fixedCost;
-            const estimatedProfit = totalAllTimeRev - totalCost;
-
-            const soldList = Object.values(itemSummary).sort((a, b) => b.qty - a.qty);
-
-            let lines = [
-                `📊 [MÊ ĐÁ] BÁO CÁO CHI TIẾT NGÀY ${todayStr}`,
-                `🕒 Cập nhật lúc: ${now.toLocaleTimeString('vi-VN')}`,
+            const soldLines = Object.values(soldMap).map(s => `• ${s.name}: ${s.qty} ly (${s.rev.toLocaleString('vi-VN')}đ)`).join('\n') || '- Chưa bán ly nào';
+            return [
+                `📊 [MÊ ĐÁ] BÁO CÁO DOANH THU & MÓN BÁN (${todayStr})`,
                 `========================`,
-                `💰 1. SỐ TIỀN CHI TIẾT TRONG NGÀY:`,
-                `• Doanh thu hôm nay: ${dailyRevenue.toLocaleString('vi-VN')} VNĐ`,
-                `• Tổng số đơn hôm nay: ${todayOrders.length} đơn (Tại quán: ${dineInCount} | Mang về: ${takeAwayCount})`,
-                `• Tổng số ly đã bán hôm nay: ${totalCups} ly`,
-                `------------------------`,
-                `📈 TỔNG KẾT LŨY KẾ THÁNG:`,
-                `• Tổng doanh thu lũy kế: ${totalAllTimeRev.toLocaleString('vi-VN')} VNĐ`,
-                `• Chi phí nguyên liệu: ${ingCost.toLocaleString('vi-VN')} VNĐ`,
-                `• Chi phí cố định/khác: ${fixedCost.toLocaleString('vi-VN')} VNĐ`,
-                `• Tiền lãi ròng ước tính: ${estimatedProfit.toLocaleString('vi-VN')} VNĐ`,
-                `========================`,
-                `🧋 2. HÔM NAY BÁN ĐƯỢC NHỮNG GÌ:`
-            ];
-
-            if (soldList.length === 0) {
-                lines.push(`- Chưa có món nào được bán trong ngày ${todayStr}.`);
-            } else {
-                soldList.forEach((item, idx) => {
-                    lines.push(`${idx + 1}. ${item.name}: ${item.qty} ly x ${item.price.toLocaleString('vi-VN')}đ = ${item.amount.toLocaleString('vi-VN')} VNĐ`);
-                });
-            }
-
-            const stockInfo = buildStockAlertReport();
-            lines.push(`========================`);
-            lines.push(`⚠️ 3. TÌNH TRẠNG HẾT MÓN / NGUYÊN LIỆU:`);
-            if (stockInfo.data.outIngredients.length === 0 && stockInfo.data.outProducts.length === 0) {
-                lines.push(`✅ Không có nguyên liệu hoặc món nào bị hết.`);
-            } else {
-                if (stockInfo.data.outIngredients.length > 0) lines.push(...stockInfo.data.outIngredients);
-                if (stockInfo.data.outProducts.length > 0) lines.push(...stockInfo.data.outProducts);
-            }
-
-            return {
-                text: lines.join('\n'),
-                data: {
-                    date: todayStr,
-                    dailyRevenue,
-                    totalOrders: todayOrders.length,
-                    totalCups,
-                    totalAllTimeRev,
-                    ingCost,
-                    fixedCost,
-                    estimatedProfit,
-                    soldItems: soldList
-                }
-            };
+                `• Số đơn hôm nay: ${todayOrders.length} đơn (${dailyCups} ly)`,
+                `• Doanh thu hôm nay: ${dailyRev.toLocaleString('vi-VN')} VNĐ`,
+                `• Chi tiết các món đã bán:\n${soldLines}`
+            ].join('\n');
         }
 
-        // Nút Test kết nối Zalo
-        window.testZaloConnection = async function() {
-            await window.saveZaloConfig();
+        window.fetchZaloBotChatId = async function() {
             showLoader();
-            const testMsg = `🔔 [MÊ ĐÁ] TEST KẾT NỐI ZALO THÀNH CÔNG!\n🕒 Thời gian: ${new Date().toLocaleString('vi-VN')}\n✅ Hệ thống web đã sẵn sàng tự động đẩy thông báo:\n1. Hết nguyên liệu\n2. Hết món\n3. Số tiền chi tiết hàng ngày\n4. Chi tiết bán được những gì`;
-            const res = await sendToZalo(testMsg, "test_connection", { status: "ok" });
-            hideLoader();
-            if (res.ok) {
-                alert("✅ Đã đẩy tin nhắn Test về Zalo thành công!");
-            } else {
-                alert("⚠️ " + (res.reason || "Không thể kết nối Webhook/OA. Nội dung đã được tạo sẵn ở khung Xem trước bên dưới, bạn có thể bấm 'Copy Tin Nhắn' hoặc 'Mở Zalo Dán Gửi Ngay'."));
-            }
-        }
-
-        // Nút đẩy cảnh báo hết nguyên liệu & hết món
-        window.pushStockAlertToZalo = async function(manualClick = false) {
-            const report = buildStockAlertReport();
-            if (!manualClick && !report.hasAlert) return;
-            if (manualClick) showLoader();
-            const res = await sendToZalo(report.text, "stock_alert", report.data);
-            if (manualClick) {
+            try {
+                const res = await callFn('zaloFetchUpdates', { timeout: 20 });
+                if (res && res.found && res.found.id) {
+                    $('zaloBotChatId').value = res.found.id;
+                    await window.saveZaloConfig(true);
+                    hideLoader();
+                    alert(
+                        `🎉 Bắt được Chat ID thành công: ${res.found.id}` +
+                        (res.found.name ? ` (${res.found.name})` : '') +
+                        `\n\nĐã lưu. Bấm "🔔 Gửi Test Zalo" để kiểm tra.`
+                    );
+                } else {
+                    hideLoader();
+                    alert(
+                        "⚠️ Chưa bắt được tin nhắn nào trong 20 giây vừa rồi.\n\n" +
+                        "Cách làm: mở Zalo trên điện thoại → nhắn bất kỳ câu gì (vd: \"alo\") vào " +
+                        "Bot MÊ ĐÁ Assistant → quay lại đây bấm nút này."
+                    );
+                }
+            } catch (e) {
                 hideLoader();
-                if (res.ok) alert("✅ Đã đẩy báo cáo Hết nguyên liệu & Hết món về Zalo!");
-                else alert("ℹ️ Đã tạo bản tin cảnh báo Kho & Món ở khung xem trước!\n" + (res.reason || ""));
+                alert("⚠️ " + ((e && e.message) || e));
             }
         }
 
-        // Nút đẩy báo cáo doanh thu & món bán hôm nay
+        window.openZaloGetUpdatesTab = async function() {
+            let token = ($('zaloBotToken').value || '').trim();
+            if (!token) {
+                const tokSnap = await getDoc(doc(db, 'config', 'zaloToken')).catch(() => null);
+                if (tokSnap && tokSnap.exists()) token = tokSnap.data().botToken || '';
+            }
+            if (!token) {
+                return alert('Vui lòng dán Zalo Bot Token vào ô số 1 và bấm Lưu Cấu Hình trước!');
+            }
+            window.open(`https://bot-api.zapps.me/bot${token}/getUpdates`, '_blank');
+        }
+
+        window.testZaloConnection = async function() {
+            showLoader();
+            try {
+                const res = await callFn('zaloTest', {});
+                if (res && (res.message || res.text)) {
+                    $('zaloMessagePreview').textContent = res.message || res.text;
+                }
+                alert(res.ok ? "✅ Đã gửi tin nhắn Test về Zalo thành công!"
+                             : "⚠️ " + (res.reason || 'Không gửi được.'));
+            } catch (e) {
+                alert("⚠️ " + ((e && e.message) || e));
+            } finally { hideLoader(); }
+        }
+
+        window.pushStockAlertToZalo = async function(manualClick = false) {
+            if (!manualClick) return;
+            showLoader();
+            const previewMsg = buildStockPreviewText();
+            $('zaloMessagePreview').textContent = previewMsg;
+            try {
+                const res = await callFn('zaloPushStock', {});
+                if (res && (res.message || res.text)) {
+                    $('zaloMessagePreview').textContent = res.message || res.text;
+                }
+                alert(res.ok ? "✅ Đã đẩy báo cáo Hết nguyên liệu & Hết món về Zalo!"
+                             : "ℹ️ " + (res.reason || 'Không gửi được.'));
+            } catch (e) {
+                alert("ℹ️ " + ((e && e.message) || e));
+            } finally { hideLoader(); }
+        }
+
         window.pushDailyReportToZalo = async function(manualClick = false) {
             if (manualClick) showLoader();
-            const ordersSnap = await getDocs(collection(db, "orders"));
-            globalOrders = ordersSnap.docs.map(d => d.data());
-            const report = buildDailySalesReport();
-            const res = await sendToZalo(report.text, "daily_sales_report", report.data);
-            if (manualClick) {
-                hideLoader();
-                if (res.ok) alert("✅ Đã đẩy Báo cáo tiền chi tiết & Danh sách món bán hôm nay về Zalo!");
-                else alert("ℹ️ Đã tổng hợp Báo cáo ngày ở khung xem trước!\n" + (res.reason || ""));
-            }
+            const previewMsg = buildDailyPreviewText();
+            $('zaloMessagePreview').textContent = previewMsg;
+            try {
+                const res = await callFn('zaloPushReport', {});
+                if (res && (res.message || res.text)) {
+                    $('zaloMessagePreview').textContent = res.message || res.text;
+                }
+                if (!manualClick) return;
+                alert(res.ok ? "✅ Đã đẩy Báo cáo doanh thu & món bán hôm nay về Zalo!"
+                             : "ℹ️ " + (res.reason || 'Không gửi được.'));
+            } catch (e) {
+                if (manualClick) alert("ℹ️ " + ((e && e.message) || e));
+            } finally { if (manualClick) hideLoader(); }
         }
 
-        // Tự động gửi báo cáo cuối ngày nếu qua giờ hẹn
-        async function checkAndAutoSendDailyZalo() {
-            if (!globalZaloConfig.enableAuto || !globalZaloConfig.autoDailySummary) return;
-            const now = new Date();
-            const todayStr = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()}`;
-            if (now.getHours() >= (globalZaloConfig.summaryHour || 21) && globalZaloConfig.lastDailySummaryDate !== todayStr) {
-                const report = buildDailySalesReport(todayStr);
-                const res = await sendToZalo(report.text, "auto_daily_summary", report.data);
-                if (res.ok) {
-                    globalZaloConfig.lastDailySummaryDate = todayStr;
-                    await updateDoc(doc(db, "config", "zalo"), { lastDailySummaryDate: todayStr }).catch(() => {});
-                }
+        function startZaloAutomation() {
+            fetchZaloConfigFromServer();
+            updateZaloAutoInfoUI();
+            setInterval(fetchZaloConfigFromServer, 60 * 1000);
+        }
+
+        window.runZaloAutoNow = async function() {
+            showLoader();
+            try {
+                const out = await callFn('runAutomationNow', {});
+                await fetchZaloConfigFromServer();
+                hideLoader();
+                alert(
+                    "⚡ Đã chạy tác vụ tự động trên máy chủ.\n\n" +
+                    "• Lịch báo cáo: mỗi 15 phút, gửi lúc " + out.summaryHour + ":00 giờ VN.\n" +
+                    "• Hiện giờ VN: " + out.nowHour + ":00\n" +
+                    (out.sent.length ? "✅ Thành công:\n   - " + out.sent.join("\n   - ") : "") +
+                    (out.errors.length ? "\n\n⚠️ Lưu ý:\n   - " + out.errors.join("\n   - ") : "")
+                );
+            } catch (e) {
+                alert("⚠️ " + ((e && e.message) || e));
+            } finally { hideLoader(); }
+        }
+
+        function updateZaloAutoInfoUI() {
+            const set = (id, txt) => { const el = $(id); if (el) el.textContent = txt; };
+            const hour = Number(globalZaloConfig.summaryHour ?? 21);
+            const todayStr = fmtDate(new Date());
+            const lastSent = globalZaloConfig.lastDailySummaryDate || '';
+
+            set('zaloNextRunText',
+                !globalZaloConfig.enableAuto
+                    ? '⛔ Tự động đang TẮT'
+                    : (lastSent === todayStr
+                        ? `✅ Đã gửi báo cáo ${todayStr} — ngày mai sẽ gửi lại lúc ${hour}:00`
+                        : `⏳ Báo cáo ${todayStr} sẽ tự gửi lúc ${hour}:00 (server kiểm tra mỗi 15 phút)`));
+
+            const lastAt = Number(globalZaloConfig.lastDailySummaryAt || 0);
+            set('zaloLastSentText', lastAt
+                ? new Date(lastAt).toLocaleString('vi-VN') + ' · ngày ' + lastSent
+                : 'Chưa có lần gửi tự động nào');
+
+            set('zaloWatcherText', '🖥️ Đang chạy trên máy chủ 24/7');
+
+            const err = $('zaloErrorText');
+            if (err) {
+                err.textContent = zaloLastError ? ('⚠️ ' + zaloLastError) : '';
+                err.style.display = zaloLastError ? 'block' : 'none';
             }
         }
 
@@ -1037,7 +1054,8 @@ ${rawStr}
         window.openZaloDirectChat = function() {
             const text = document.getElementById('zaloMessagePreview').textContent;
             navigator.clipboard.writeText(text).catch(() => {});
-            const phone = (document.getElementById('zaloPhone').value || '').replace(/[^0-9]/g, '');
+            const inp = document.getElementById('zaloPhone');
+            const phone = String((zaloUnlocked && inp ? inp.value : globalZaloConfig.phone) || '').replace(/[^0-9]/g, '');
             const zaloUrl = phone ? `https://zalo.me/${phone}` : `https://chat.zalo.me/`;
             window.open(zaloUrl, '_blank');
         }
@@ -1089,7 +1107,7 @@ ${rawStr}
             }
         }
         window.saveQRCode = window.saveBankConfig;
-        
+
         window.deleteCustomQR = async function() {
             if(confirm("Bạn có chắc muốn XÓA ảnh QR này?")) {
                 tempQRBase64 = "";
@@ -1163,7 +1181,7 @@ ${rawStr}
                 globalInventory[idx].quantity = Math.max(0, globalInventory[idx].quantity + val);
                 await updateDoc(doc(db, "inventory", id), { quantity: globalInventory[idx].quantity });
                 hideLoader(); renderInventory();
-                
+
                 if (val > 0) {
                     let cost = parseFloat(prompt(`Nhập số tiền đã chi để nhập lô ${globalInventory[idx].name} (VNĐ):`, "0"));
                     if (cost && cost > 0) {
@@ -1171,8 +1189,6 @@ ${rawStr}
                         document.getElementById('finIng').value = curIngCost + cost;
                         window.updateFinance();
                     }
-                } else if (globalInventory[idx].quantity <= 0 && globalZaloConfig.enableAuto && globalZaloConfig.notifyLowStock) {
-                    window.pushStockAlertToZalo(false);
                 }
             }
         }
@@ -1201,7 +1217,7 @@ ${rawStr}
             let unit = document.getElementById('ingUnit').value;
             if(!name) return alert("Vui lòng nhập tên!");
             showLoader();
-            
+
             if (id) {
                 await updateDoc(doc(db, "inventory", id), { name, quantity: qty, unit });
                 let idx = globalInventory.findIndex(i => i.id === id);
@@ -1211,7 +1227,7 @@ ${rawStr}
                 let newItem = { id: newId, name, quantity: qty, unit };
                 await setDoc(doc(db, "inventory", newId), newItem);
                 globalInventory.push(newItem);
-                
+
                 let initialCost = parseFloat(document.getElementById('ingCost').value) || 0;
                 if(initialCost > 0) {
                     document.getElementById('finIng').value = (parseFloat(document.getElementById('finIng').value) || 0) + initialCost;
@@ -1219,9 +1235,6 @@ ${rawStr}
                 }
             }
             hideLoader(); window.closeModals(); renderInventory();
-            if (qty <= 0 && globalZaloConfig.enableAuto && globalZaloConfig.notifyLowStock) {
-                window.pushStockAlertToZalo(false);
-            }
         }
 
         window.deleteIngredient = async function(id) {
@@ -1280,7 +1293,7 @@ ${rawStr}
         window.openProductModal = function(id = null) {
             document.getElementById('modalProduct').style.display = 'flex';
             const recipeDiv = document.getElementById('recipeInputs'); recipeDiv.innerHTML = '';
-            
+
             if (id) {
                 let p = globalProducts.find(x => x.id === id);
                 document.getElementById('prodModalTitle').textContent = "Sửa Sản Phẩm";

@@ -1,0 +1,99 @@
+rules_version = '2';
+
+/* ============================================================================
+ *  FIREBASE SECURITY RULES - MÊ ĐÁ
+ * ----------------------------------------------------------------------------
+ *  Nguyên tắc:
+ *   1. CHỈ Cloud Functions (Admin SDK) được tạo đơn hàng, cấp số thứ tự,
+ *      cộng doanh thu, trừ kho và giữ Token Zalo.
+ *   2. Mọi thao tác quản trị phải có custom claim `admin == true`.
+ *      Claim này chỉ function adminLogin mới cấp được, sau khi kiểm tra
+ *      mật khẩu - không ai tự tạo được từ trình duyệt.
+ *   3. Trang công khai đăng nhập ẩn danh (signInAnonymously) nên chỉ ĐỌC
+ *      được thông tin cần thiết cho menu: products + inventory.
+ *
+ *  KHÔNG BAO GIỜ mở quyềng ghi cho tài khoản ẩn danh.
+ * ========================================================================== */
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /* ------------------------------------------------------- tiện ích */
+    function isAdmin() {
+      return request.auth != null
+             && request.auth.token.admin == true;
+    }
+
+    // Đã đăng nhập (bao gồm cả ẩn danh) - dùng cho trang menu
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Chỉ dành cho Cloud Functions, mọi trình duyệt đều bị chặn
+    function isFalse() {
+      return false;
+    }
+
+    /* ------------------------------------------------- cấu hình chung */
+    match /config/{docId} {
+      // 'bank' và 'event' là thông tin công khai: khách cần đọc để hiện QR
+      // thanh toán và banner sự kiện. CHỈ đọc, không ghi.
+      //
+      // 'zalo'  -> chỉ admin (chứa OA token, cấu hình proxy)
+      // 'zaloToken' -> KHÔNG ai đọc được từ trình duyệt (Token Bot)
+      // 'admin' -> KHÔNG ai đọc được (hash mật khẩu quản trị)
+      // 'finance' -> chỉ admin (doanh thu, chi phí)
+      allow read: if (docId == 'bank' || docId == 'event')
+                    ? isSignedIn()
+                    : isAdmin();
+
+      allow write: if isAdmin();
+
+      allow list: if (docId == 'bank' || docId == 'event')
+                    ? isSignedIn()
+                    : isAdmin();
+    }
+
+    /* ------------------------------------------------------- menu món */
+    // Khách cần xem tên + giá để đặt món
+    match /products/{productId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+
+      allow list: if isSignedIn();
+    }
+
+    /* ---------------------------------------------------- kho nguyên liệu */
+    // Trang menu cần biết còn pha được bao nhiêu ly.
+    // LƯU Ý: điều này để lộ số lượng tồn kho cho người dùng ẩn danh.
+    // Nếu muốn giấu kín, xem ghi chú trong HUONG-DAN-DEPLOY.md (mục "Tuỳ chọn").
+    match /inventory/{ingId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+
+      allow list: if isSignedIn();
+    }
+
+    /* -------------------------------------------------------- đơn hàng */
+    // KHÔNG cho trình duyệt tự tạo đơn - tránh đặt hàng giả / sửa giá.
+    // Mọi đơn hàng phải đi qua hàm placeOrder() trên Cloud Functions.
+    match /orders/{orderId} {
+      allow read, update, delete: if isAdmin();
+      allow create: if isFalse();
+    }
+
+    /* ------------------------------------- dữ liệu nội bộ - cấm tuyệt đối */
+    match /system/{docId} {
+      allow read, write: if isFalse();
+    }
+
+    match /rateLimit/{docId} {
+      allow read, write: if isFalse();
+    }
+
+    /* --------------------------------- chặn mọi thứ chưa được khai báo ở trên */
+    match /{document=**} {
+      allow read, write: if isFalse();
+    }
+  }
+}

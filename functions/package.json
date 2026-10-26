@@ -1,0 +1,13 @@
+{
+  "name": "meda-zalo-functions",
+  "description": "Backend Mê Đá: đặt hàng, thông báo Zalo 24/7, báo cáo hàng ngày",
+  "private": true,
+  "engines": {
+    "node": "20"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "firebase-admin": "^12.7.0",
+    "firebase-functions": "^6.1.0"
+  }
+}

@@ -1037,7 +1037,8 @@
     <!-- TÍCH HỢP FIREBASE (TẢI SONG SONG - GIỮ NGUYÊN) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+        import { ready as readyAnon } from "./assets/meda.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAtZN8CGdH0M-OTs9Z2gGCsiA2AWJ0WRXg",
@@ -1067,6 +1068,9 @@
 
         async function loadDataFromCloud() {
             try {
+                // Phải đăng nhập ẩn danh trước khi đọc dữ liệu (Security Rules yêu cầu)
+                await readyAnon();
+
                 const [eventSnap, invSnap, prodSnap] = await Promise.all([
                     getDoc(doc(db, "config", "event")),
                     getDocs(collection(db, "inventory")),
@@ -1084,14 +1088,14 @@
                     }
                 }
 
+                // Trang khách không được ghi dữ liệu. Nếu kho/menu còn trống thì
+                // quản trị viên tạo dữ liệu mẫu trong trang quản trị.
                 if (invSnap.empty) {
-                    for (let item of defaultInventory) await setDoc(doc(db, "inventory", item.id), item);
-                    globalInventory = defaultInventory;
-                } else { globalInventory = invSnap.docs.map(d => d.data()); }
+                    globalInventory = [];
+                } else { globalInventory = invSnap.docs.map(d => ({ ...d.data(), id: d.id })); }
 
                 if (prodSnap.empty) {
-                    for (let p of defaultProducts) await setDoc(doc(db, "products", p.id), p);
-                    globalProducts = defaultProducts;
+                    globalProducts = [];
                 } else { globalProducts = prodSnap.docs.map(d => { let data = d.data(); data.id = d.id; return data; }); }
                 
                 renderMenu(); updateCartUI();

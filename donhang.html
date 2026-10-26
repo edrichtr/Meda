@@ -109,6 +109,7 @@
     <!-- TÍCH HỢP FIREBASE REALTIME & NÚT BÁO ZALO NHANH TỪ BẾP -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
+        import { readyAdmin as medaReadyAdmin, loginAdmin as medaLogin, logoutAdmin as medaLogout, callFn } from "./assets/meda.js";
         import { getFirestore, collection, query, orderBy, onSnapshot, getDocs, doc, getDoc, updateDoc, limit } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -123,36 +124,49 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        if (sessionStorage.getItem('meda_staff_logged_in') === 'true') {
-            document.getElementById('loginOverlay').style.display = 'none';
-            startListeningOrders();
-        }
+        // Đăng nhập nhân viên
+        (async function bootStaff() {
+            try {
+                const u = await medaReadyAdmin();
+                if (u) {
+                    document.getElementById('loginOverlay').style.display = 'none';
+                    startListeningOrders();
+                }
+            } catch (e) { /* chưa đăng nhập -> hiện màn hình login */ }
+        })();
 
-        window.loginStaff = function() {
-            const currentPass = localStorage.getItem('meda_staff_pass') || '123456';
-            if (document.getElementById('staffUser').value === 'nhanvien' && document.getElementById('staffPass').value === currentPass) {
-                sessionStorage.setItem('meda_staff_logged_in', 'true');
+        window.loginStaff = async function() {
+            const pass = document.getElementById('staffPass').value;
+            if (!pass) return alert("Vui lòng nhập mật khẩu!");
+            try {
+                await medaLogin(pass);
                 document.getElementById('loginOverlay').style.display = 'none';
                 startListeningOrders();
-            } else { alert("Sai tài khoản hoặc mật khẩu!"); }
+            } catch (e) {
+                alert((e && e.message) ? e.message : "Sai tài khoản hoặc mật khẩu!");
+            }
         }
 
-        window.logoutStaff = function() { sessionStorage.removeItem('meda_staff_logged_in'); window.location.reload(); }
+        window.logoutStaff = function() { medaLogout(); }
         window.openForgotModal = function() { document.getElementById('modalForgot').style.display = 'flex'; }
         window.closeModals = function() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); }
-        
-        window.processResetPassword = function() {
-            const user = document.getElementById('fgUser').value;
-            const code = document.getElementById('fgCode').value;
-            const newPass = document.getElementById('fgNewPass').value;
-            
-            if (user === 'nhanvien' && code === 'medacoffee') {
-                if (newPass.length < 6) return alert("Mật khẩu mới phải có ít nhất 6 ký tự!");
-                localStorage.setItem('meda_staff_pass', newPass);
-                alert("Đổi mật khẩu thành công! Vui lòng đăng nhập lại.");
-                window.closeModals();
-                document.getElementById('staffPass').value = '';
-            } else { alert("Tên đăng nhập hoặc Mã khôi phục không chính xác!"); }
+
+        window.processResetPassword = async function() {
+            const code = (document.getElementById('fgCode').value || '').trim();
+            const newPass = (document.getElementById('fgNewPass').value || '').trim();
+            if (code !== 'meda' && code !== 'meda2026') {
+                return alert('❌ Mã khôi phục không đúng! (Mã mặc định: meda hoặc meda2026)');
+            }
+            if (newPass.length < 6) {
+                return alert('⚠️ Mật khẩu mới phải có ít nhất 6 ký tự!');
+            }
+            const raw = 'meda_admin::' + newPass;
+            const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(raw));
+            const passHash = 'sha256:' + Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+            const { setDoc } = await import("https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js");
+            await setDoc(doc(db, 'config', 'admin'), { passHash, updatedAt: Date.now() }, { merge: true });
+            window.closeModals();
+            alert('✅ Đã đổi mật khẩu thành công! Hãy đăng nhập lại.');
         }
 
         function startListeningOrders() {
@@ -270,20 +284,21 @@
 
                 navigator.clipboard.writeText(msg).catch(() => {});
 
+                try {
+                    const [stockRes, reportRes] = await Promise.allSettled([
+                        callFn('zaloPushStock', { message: msg, text: msg }),
+                        callFn('zaloPushReport', { message: msg, text: msg })
+                    ]);
+                    const okStock = stockRes.status === 'fulfilled' && stockRes.value && stockRes.value.ok;
+                    const okReport = reportRes.status === 'fulfilled' && reportRes.value && reportRes.value.ok;
+                    if (okStock || okReport) {
+                        alert("✅ Đã đẩy báo cáo từ Quầy Bếp về Zalo chủ quán thành công!");
+                        return;
+                    }
+                } catch (_) {}
+
                 const zaloCfg = zaloSnap.exists() ? zaloSnap.data() : null;
-                if (zaloCfg && (zaloCfg.mode === 'zalo_bot' || !zaloCfg.mode) && zaloCfg.botToken && zaloCfg.botChatId) {
-                    const targetUrl = `https://bot-api.zapps.me/bot${zaloCfg.botToken}/sendMessage`;
-                    const formBody = new URLSearchParams();
-                    formBody.append('chat_id', zaloCfg.botChatId);
-                    formBody.append('text', msg);
-                    await fetch(targetUrl, {
-                        method: 'POST',
-                        mode: 'no-cors',
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: formBody.toString()
-                    });
-                    alert("✅ Đã đẩy báo cáo từ Quầy Bếp về Bot MÊ ĐÁ Assistant trên Zalo!");
-                } else if (zaloCfg && zaloCfg.mode === 'webhook' && zaloCfg.webhookUrl) {
+                if (zaloCfg && zaloCfg.mode === 'webhook' && zaloCfg.webhookUrl) {
                     await fetch(zaloCfg.webhookUrl, {
                         method: 'POST',
                         mode: 'no-cors',

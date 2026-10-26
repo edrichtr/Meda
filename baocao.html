@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -118,6 +119,7 @@
     <!-- TÍCH HỢP FIREBASE -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
+        import { readyAdmin as medaReadyAdmin, callFn } from "./assets/meda.js";
         import { getFirestore, collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -131,8 +133,6 @@
         };
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-
-        if (sessionStorage.getItem('meda_admin_logged_in') !== 'true') window.location.href = 'admin.html';
 
         const formatMoney = (amount) => amount.toLocaleString('vi-VN');
         let financeChartInstance = null; let salesChartInstance = null;
@@ -183,8 +183,8 @@
             if (filterType === 'day') {
                 const dateVal = document.getElementById('filterDay').value; 
                 if(!dateVal) return orders;
-                const d = new Date(dateVal);
-                targetString = `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`;
+                const [year, month, day] = dateVal.split('-');
+                targetString = `${day}/${month}/${year}`;
             } 
             else if (filterType === 'month') {
                 const monthVal = document.getElementById('filterMonth').value; 
@@ -241,7 +241,7 @@
             currentReportSummary = { title: pdfTitle, revenue: filteredRevenue, costs: globalTotalCosts, profit, totalCups, salesArray };
         }
 
-        // Đẩy báo cáo đang xem trên màn hình về Zalo
+        // Đẩy báo cáo đang xem trên màn hình về Zalo qua Cloud Function
         window.pushCurrentReportToZalo = async function() {
             const outIngs = globalInventory.filter(i => i.quantity <= 0).map(i => `❌ ${i.name} (0 ${i.unit})`);
             const outProds = [];
@@ -283,70 +283,37 @@
 
             navigator.clipboard.writeText(msg).catch(() => {});
 
-            if (globalZaloConfig && (globalZaloConfig.mode === 'zalo_bot' || !globalZaloConfig.mode) && globalZaloConfig.botToken && globalZaloConfig.botChatId) {
-                document.getElementById('globalLoader').style.display = 'flex';
-                const targetUrl = `https://bot-api.zapps.me/bot${globalZaloConfig.botToken}/sendMessage`;
-                try {
-                    const formBody = new URLSearchParams();
-                    formBody.append('chat_id', globalZaloConfig.botChatId);
-                    formBody.append('text', msg);
-                    await fetch(targetUrl, {
-                        method: 'POST',
-                        mode: 'no-cors',
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: formBody.toString()
-                    });
-                    document.getElementById('globalLoader').style.display = 'none';
-                    alert("✅ Đã đẩy trực tiếp Báo cáo chi tiết về Bot MÊ ĐÁ Assistant trên Zalo!");
-                } catch (e) {
-                    document.getElementById('globalLoader').style.display = 'none';
-                    alert("⚠️ Đã sao chép nội dung báo cáo vào bộ nhớ tạm. Vui lòng dán vào Zalo!");
-                }
-            } else if (globalZaloConfig && globalZaloConfig.mode === 'webhook' && globalZaloConfig.webhookUrl) {
-                document.getElementById('globalLoader').style.display = 'flex';
-                try {
-                    await fetch(globalZaloConfig.webhookUrl, {
-                        method: 'POST',
-                        mode: 'no-cors',
-                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                        body: JSON.stringify({
-                            shop: "Mê Đá",
-                            type: "detailed_report",
-                            message: msg,
-                            text: msg,
-                            content: msg,
-                            data: currentReportSummary
-                        })
-                    });
-                    document.getElementById('globalLoader').style.display = 'none';
+            document.getElementById('globalLoader').style.display = 'flex';
+            try {
+                const res = await callFn('zaloPushReport', { message: msg, text: msg, data: currentReportSummary });
+                document.getElementById('globalLoader').style.display = 'none';
+                if (res && res.ok) {
                     alert("✅ Đã đẩy trực tiếp Báo cáo chi tiết về Zalo thành công!");
-                } catch (e) {
-                    document.getElementById('globalLoader').style.display = 'none';
-                    alert("⚠️ Đã sao chép nội dung báo cáo vào bộ nhớ tạm. Vui lòng dán vào Zalo!");
+                } else {
+                    alert("📋 Đã sao chép báo cáo vào bộ nhớ tạm!\n" + (res && res.reason ? "Lưu ý: " + res.reason : "Bạn có thể dán gửi vào Zalo."));
                 }
-            } else if (globalZaloConfig && globalZaloConfig.mode === 'zalo_oa' && globalZaloConfig.oaAccessToken && globalZaloConfig.oaRecipientId) {
-                document.getElementById('globalLoader').style.display = 'flex';
-                try {
-                    const oaEndpoint = globalZaloConfig.corsProxy || "https://openapi.zalo.me/v3.0/oa/message/cs";
-                    await fetch(oaEndpoint, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'access_token': globalZaloConfig.oaAccessToken
-                        },
-                        body: JSON.stringify({
-                            recipient: { user_id: globalZaloConfig.oaRecipientId },
-                            message: { text: msg }
-                        })
-                    });
-                    document.getElementById('globalLoader').style.display = 'none';
-                    alert("✅ Đã đẩy báo cáo về Zalo OA thành công!");
-                } catch (e) {
-                    document.getElementById('globalLoader').style.display = 'none';
-                    alert("⚠️ Đã sao chép báo cáo vào Clipboard. Hãy kiểm tra lại cấu hình Zalo OA trong trang Quản trị.");
+            } catch (e) {
+                document.getElementById('globalLoader').style.display = 'none';
+                if (globalZaloConfig && globalZaloConfig.mode === 'webhook' && globalZaloConfig.webhookUrl) {
+                    try {
+                        await fetch(globalZaloConfig.webhookUrl, {
+                            method: 'POST',
+                            mode: 'no-cors',
+                            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                            body: JSON.stringify({
+                                shop: "Mê Đá",
+                                type: "detailed_report",
+                                message: msg,
+                                text: msg,
+                                content: msg,
+                                data: currentReportSummary
+                            })
+                        });
+                        alert("✅ Đã đẩy trực tiếp Báo cáo chi tiết về Webhook Zalo thành công!");
+                        return;
+                    } catch (_) {}
                 }
-            } else {
-                alert("📋 Đã sao chép toàn bộ Báo cáo vào bộ nhớ tạm!\n(Để web tự động bắn thẳng về Zalo không cần bấm, bạn hãy vào trang Quản Trị -> mục Kết nối Zalo để dán Webhook URL hoặc Zalo OA Token nhé).");
+                alert("📋 Đã sao chép toàn bộ Báo cáo vào bộ nhớ tạm! Bạn có thể dán (Ctrl+V) gửi qua Zalo.");
                 const phone = (globalZaloConfig && globalZaloConfig.phone) ? globalZaloConfig.phone.replace(/[^0-9]/g, '') : '';
                 window.open(phone ? `https://zalo.me/${phone}` : `https://chat.zalo.me/`, '_blank');
             }
@@ -409,8 +376,16 @@
         document.getElementById('filterMonth').value = today.getFullYear() + '-' + (today.getMonth() + 1).toString().padStart(2, '0');
         document.getElementById('filterType').value = 'month';
         window.toggleFilterInputs();
-        
-        fetchCloudData();
+
+        // Kiểm tra quyền quản trị trước khi tải dữ liệu báo cáo
+        (async function guardReport() {
+            try {
+                await medaReadyAdmin();
+                await fetchCloudData();
+            } catch (e) {
+                window.location.href = 'admin.html';
+            }
+        })();
     </script>
 </body>
 </html>

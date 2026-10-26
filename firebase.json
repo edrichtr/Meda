@@ -1,0 +1,25 @@
+{
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "hosting": {
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      "firestore.rules",
+      "firestore.indexes.json",
+      "HUONG-DAN-DEPLOY.md",
+      "zalo-247-google-apps-script.gs",
+      "**/.*",
+      "**/node_modules/**",
+      "functions/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}
